@@ -16,9 +16,10 @@ Installation
 3. Give the file the following information:
 
 ```
-url: "http://whatever"
-username: "username"
-password: "password"
+url: 			"http://my-nexus-server/nexus/"
+repository:		"my-repository-id"
+username: 		"username"
+password: 		"password"
 ```
 
 Usage

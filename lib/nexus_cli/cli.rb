@@ -1,7 +1,7 @@
 require 'thor'
 
 module NexusCli
-  module Cli
+  module Mixin
     def self.included(base)
       base.send :include, ::Thor::Actions
       base.class_eval do
@@ -35,5 +35,10 @@ module NexusCli
         end
       end
     end
+  end
+end
+module NexusCli
+  class Cli < Thor
+    include NexusCli::Mixin
   end
 end
