@@ -1,5 +1,6 @@
 require 'restclient'
 require 'yaml'
+require 'open3'
 
 module NexusCli
   class Remote
@@ -43,7 +44,7 @@ module NexusCli
         File.expand_path(artifact.path)
       end
 
-      def push_artifact(artifact, file)
+      def push_artifact(artifact, file, insecure)
         #Build up the pieces that will make up the PUT request
         split_artifact = artifact.split(":")
         if(split_artifact.size < 4)
@@ -55,8 +56,13 @@ module NexusCli
         file_name = "#{split_artifact[1]}-#{version}.#{split_artifact[3]}"      
 
         put_string = "content/repositories/releases/#{artifact_id}/#{group_id}/#{version}/#{file_name}"
-        #nexus[put_string].put File.read(file), :accept => "*/*"
-        Kernel.quietly {`curl -T #{file} #{configuration['url']}#{put_string} -u #{configuration['username']}:#{configuration['password']}`}
+        Open3.popen3("curl #{insecure ? "-k" : ""} -T #{file} #{configuration['url']}#{put_string} -u #{configuration['username']}:#{configuration['password']}") do |stdin, stdout, stderr, wait_thr|  
+          exit_code = wait_thr.value.exitstatus
+          case exit_code
+          when 60
+            raise NonSecureConnectionException
+          end
+        end
       end
 
       def delete_artifact(artifact)

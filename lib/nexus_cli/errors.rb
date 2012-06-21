@@ -38,4 +38,11 @@ module NexusCli
     end
     status_code(103)
   end
+
+  class NonSecureConnectionException < NexusCliError
+    def message
+      "Your communication with a server using an SSL certificate failed during validation. You may want to try the --insecure option."
+    end
+    status_code(104)
+  end
 end
