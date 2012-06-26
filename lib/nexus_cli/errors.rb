@@ -59,4 +59,14 @@ module NexusCli
     end
     status_code(106)
   end
+
+  class BadUploadRequestException < NexusCliError
+    def message
+      %{Your request was denied by the Nexus server due to a bad request and your artifact has not been uploaded.
+This could mean several things:
+  Your .nexus_cli['repository'] is invalid.
+  The artifact with this identifier alread exists inside the repository and that repository does not allow multiple deployments.}
+    end
+    status_code(107)
+  end
 end

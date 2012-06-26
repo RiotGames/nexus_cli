@@ -44,7 +44,7 @@ module NexusCli
         File.expand_path(artifact.path)
       end
 
-      def push_artifact(artifact, file, insecure)
+      def push_artifact(artifact, file, insecure, override_repository)
         #Build up the pieces that will make up the PUT request
         split_artifact = artifact.split(":")
         if(split_artifact.size < 4)
@@ -54,13 +54,15 @@ module NexusCli
         group_id = split_artifact[1].gsub(".", "/")
         version = split_artifact[2]
         file_name = "#{split_artifact[1]}-#{version}.#{split_artifact[3]}"      
-
-        put_string = "content/repositories/releases/#{artifact_id}/#{group_id}/#{version}/#{file_name}"
-        Open3.popen3("curl #{insecure ? "-k" : ""} -T #{file} #{configuration['url']}#{put_string} -u #{configuration['username']}:#{configuration['password']}") do |stdin, stdout, stderr, wait_thr|  
+        repository = override_repository.nil? ? configuration['repository'] : override_repository
+        put_string = "content/repositories/#{repository}/#{artifact_id}/#{group_id}/#{version}/#{file_name}"
+        Open3.popen3("curl -I #{insecure ? "-k" : ""} -T #{file} #{File.join(configuration['url'], put_string)} -u #{configuration['username']}:#{configuration['password']}") do |stdin, stdout, stderr, wait_thr|  
           exit_code = wait_thr.value.exitstatus
           standard_out = stdout.read
-          if (standard_out.match('403 Forbidden'))
+          if (standard_out.match('403 Forbidden') || standard_out.match('401 Unauthorized'))
             raise PermissionsException
+          elsif standard_out.match('400 Bad Request')
+            raise BadUploadRequestException
           end
           case exit_code
           when 60
@@ -81,7 +83,7 @@ module NexusCli
         version = split_artifact[2]
 
         delete_string = "content/repositories/releases/#{artifact_id}/#{group_id}/#{version}"
-        Kernel.quietly {`curl --request DELETE #{configuration['url']}#{delete_string} -u #{configuration['username']}:#{configuration['password']}`}
+        Kernel.quietly {`curl --request DELETE #{File.join(configuration['url'], delete_string)} -u #{configuration['username']}:#{configuration['password']}`}
       end
 
       def get_artifact_info(artifact)
