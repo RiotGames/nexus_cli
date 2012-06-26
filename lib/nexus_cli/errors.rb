@@ -32,7 +32,7 @@ module NexusCli
     status_code(102)
   end
 
-  class MissingSettingsFile < NexusCliError
+  class MissingSettingsFileException < NexusCliError
     def message
       "The .nexus_cli file is missing or corrupt."
     end
@@ -44,5 +44,19 @@ module NexusCli
       "Your communication with a server using an SSL certificate failed during validation. You may want to try the --insecure option."
     end
     status_code(104)
+  end
+
+  class CouldNotConnectToNexusException < NexusCliError
+    def message
+      "Could not connect to Nexus. Please ensure the url in .nexus_cli is reachable."
+    end
+    status_code(105)
+  end
+
+  class PermissionsException < NexusCliError
+    def message
+      "Your request was denied by the Nexus server due to a permissions error. You will need to administer the Nexus or use a different user/password in .nexus_cli."
+    end
+    status_code(106)
   end
 end

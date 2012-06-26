@@ -6,8 +6,11 @@ module NexusCli
       base.send :include, ::Thor::Actions
       base.class_eval do
 
+        method_option :destination, 
+          :type => :string,
+          :default => nil,
+          :desc => "A different folder other than the current working directory."
         desc "pull_artifact artifact", "Pulls an artifact from Nexus and places it on your machine."
-        method_option :destination, :default => nil # defaults to the current working directory
         def pull_artifact(artifact)
           begin
             path_to_artifact = Remote.pull_artifact(artifact, options[:destination])
@@ -18,8 +21,11 @@ module NexusCli
           end
         end
 
+        method_option :insecure,
+          :type => :boolean,
+          :default => false,
+          :desc => "Overrides any failures because of an 'insecure' SSL conncetion."
         desc "push_artifact artifact file", "Pushes an artifact from your machine onto the Nexus."
-        method_options :insecure => false
         def push_artifact(artifact, file)
           begin
             Remote.push_artifact(artifact, file, options[:insecure])

@@ -16,7 +16,7 @@ module NexusCli
         begin
           config = YAML::load_file(File.expand_path("~/.nexus_cli"))
         rescue Errno::ENOENT
-          raise MissingSettingsFile
+          raise MissingSettingsFileException
         end
         validate_config(config)
         @configuration = config
@@ -58,9 +58,15 @@ module NexusCli
         put_string = "content/repositories/releases/#{artifact_id}/#{group_id}/#{version}/#{file_name}"
         Open3.popen3("curl #{insecure ? "-k" : ""} -T #{file} #{configuration['url']}#{put_string} -u #{configuration['username']}:#{configuration['password']}") do |stdin, stdout, stderr, wait_thr|  
           exit_code = wait_thr.value.exitstatus
+          standard_out = stdout.read
+          if (standard_out.match('403 Forbidden'))
+            raise PermissionsException
+          end
           case exit_code
           when 60
             raise NonSecureConnectionException
+          when 7
+            raise CouldNotConnectToNexusException
           end
         end
       end
