@@ -26,7 +26,8 @@ module NexusCli
         @nexus ||= RestClient::Resource.new configuration["url"], :user => configuration["username"], :password => configuration["password"]
       end
 
-      def pull_artifact(artifact, destination)
+      def pull_artifact(artifact, destination, overrides)
+        parse_overrides(overrides)
         split_artifact = artifact.split(":")
         if(split_artifact.size < 4)
           raise ArtifactMalformedException
@@ -44,8 +45,9 @@ module NexusCli
         File.expand_path(artifact.path)
       end
 
-      def push_artifact(artifact, file, insecure, override_repository)
+      def push_artifact(artifact, file, insecure, overrides)
         #Build up the pieces that will make up the PUT request
+        parse_overrides(overrides)
         split_artifact = artifact.split(":")
         if(split_artifact.size < 4)
           raise ArtifactMalformedException
@@ -86,7 +88,8 @@ module NexusCli
         Kernel.quietly {`curl --request DELETE #{File.join(configuration['url'], delete_string)} -u #{configuration['username']}:#{configuration['password']}`}
       end
 
-      def get_artifact_info(artifact)
+      def get_artifact_info(artifact, overrides)
+        parse_overrides(overrides)
         split_artifact = artifact.split(":")
         if(split_artifact.size < 4)
           raise ArtifactMalformedException
@@ -103,6 +106,12 @@ module NexusCli
         def validate_config(configuration)
           ["url", "repository", "username","password"].each do |key|
             raise InvalidSettingsException.new(key) unless configuration.has_key?(key)
+          end
+        end
+
+        def parse_overrides(overrides)
+          overrides.each do |key, value|
+            configuration[key] = value unless configuration[key].nil?
           end
         end
     end
