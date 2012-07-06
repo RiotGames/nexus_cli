@@ -35,4 +35,9 @@ describe NexusCli do
     RestClient::Resource.any_instance.stub(:get).and_raise(RestClient::ResourceNotFound)
     expect {NexusCli::Remote.get_artifact_info "com.something:something:1.0.0:tgz"}.to raise_error(NexusCli::ArtifactNotFoundException)
   end
+
+  it "gives you errors when you attempt to get an artifact's custom info and it cannot be found" do
+    RestClient::Resource.any_instance.stub(:get).and_raise(RestClient::ResourceNotFound)
+    expect {NexusCli::Remote.get_artifact_custom_info "com.something:something:1.0.0:tgz"}.to raise_error(NexusCli::ArtifactNotFoundException)
+  end
 end

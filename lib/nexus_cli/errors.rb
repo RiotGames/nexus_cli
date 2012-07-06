@@ -25,7 +25,7 @@ module NexusCli
     def initialize(key)
       @missing_setting = key
     end
-    
+
     def message
       "The .nexus_cli file is missing the value: #{@missing_setting}"
     end
@@ -65,8 +65,15 @@ module NexusCli
       %{Your request was denied by the Nexus server due to a bad request and your artifact has not been uploaded.
 This could mean several things:
   Your .nexus_cli['repository'] is invalid.
-  The artifact with this identifier alread exists inside the repository and that repository does not allow multiple deployments.}
+  The artifact with this identifier already exists inside the repository and that repository does not allow multiple deployments.}
     end
     status_code(107)
+  end
+
+  class NotNexusProException < NexusCliError
+    def message
+      "You cannot use this feature unless you are using Nexus Professional."
+    end
+    status_code(108)
   end
 end

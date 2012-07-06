@@ -1,5 +1,8 @@
 .DS_Store
 .rake_tasks~
+.project
+.buildpath
 Gemfile.lock
 tmp/
 pkg/
+*.gem
