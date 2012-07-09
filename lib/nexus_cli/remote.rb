@@ -38,7 +38,7 @@ module NexusCli
         end
         group_id, artifact_id, version, extension = split_artifact
         begin
-          fileData = nexus['service/local/artifact/maven/redirect'].get ({params: {r: configuration['repository'], g: group_id, a: artifact_id, v: version, e: extension}})
+          fileData = nexus['service/local/artifact/maven/redirect'].get({:params => {:r => configuration['repository'], :g => group_id, :a => artifact_id, :v => version, :e => extension}})
         rescue RestClient::ResourceNotFound
           raise ArtifactNotFoundException
         end
@@ -56,8 +56,8 @@ module NexusCli
           raise ArtifactMalformedException
         end
         group_id, artifact_id, version, extension = split_artifact
-        nexus['service/local/artifact/maven/content'].post hasPom: false, g: group_id, a: artifact_id, v: version, e: extension, p: extension, r: configuration['repository'],
-          file: File.new(file) do |response, request, result, &block|
+        nexus['service/local/artifact/maven/content'].post({:hasPom => false, :g => group_id, :a => artifact_id, :v => version, :e => extension, :p => extension, :r => configuration['repository'],
+          :file => File.new(file)}) do |response, request, result, &block|
           case response.code
           when 400
             raise BadUploadRequestException
@@ -90,7 +90,7 @@ module NexusCli
           raise ArtifactMalformedException
         end
         begin
-          nexus['service/local/artifact/maven/resolve'].get ({params: {r: configuration['repository'], g: split_artifact[0], a: split_artifact[1], v: split_artifact[2], e: split_artifact[3]}})
+          nexus['service/local/artifact/maven/resolve'].get({:params => {:r => configuration['repository'], :g => split_artifact[0], :a => split_artifact[1], :v => split_artifact[2], :e => split_artifact[3]}})
         rescue RestClient::ResourceNotFound => e
           raise ArtifactNotFoundException
         end
