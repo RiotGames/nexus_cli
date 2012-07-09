@@ -56,20 +56,16 @@ module NexusCli
           raise ArtifactMalformedException
         end
         group_id, artifact_id, version, extension = split_artifact
-        file_name = "#{artifact_id}-#{version}.#{extension}"      
-        put_string = "content/repositories/#{configuration['repository']}/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}/#{file_name}"
-        Open3.popen3("curl -I #{insecure ? "-k" : ""} -T #{file} #{File.join(configuration['url'], put_string)} -u #{configuration['username']}:#{configuration['password']}") do |stdin, stdout, stderr, wait_thr|  
-          exit_code = wait_thr.value.exitstatus
-          standard_out = stdout.read
-          if (standard_out.match('403 Forbidden') || standard_out.match('401 Unauthorized'))
-            raise PermissionsException
-          elsif standard_out.match('400 Bad Request')
+        nexus['service/local/artifact/maven/content'].post hasPom: false, g: group_id, a: artifact_id, v: version, e: extension, p: extension, r: configuration['repository'],
+          file: File.new(file) do |response, request, result, &block|
+          case response.code
+          when 400
             raise BadUploadRequestException
-          end
-          case exit_code
-          when 60
-            raise NonSecureConnectionException
-          when 7
+          when 401
+            raise PermissionsException
+          when 403
+            raise PermissionsException
+          when 404
             raise CouldNotConnectToNexusException
           end
         end

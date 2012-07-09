@@ -48,7 +48,7 @@ module NexusCli
 
   class CouldNotConnectToNexusException < NexusCliError
     def message
-      "Could not connect to Nexus. Please ensure the url in .nexus_cli is reachable."
+      "Could not connect to Nexus. Please ensure the url you are using is reachable."
     end
     status_code(105)
   end
