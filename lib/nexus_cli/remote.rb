@@ -8,19 +8,11 @@ module NexusCli
     class << self
 
       def configuration=(config = {})
-        validate_config(config)
         @configuration = config
       end
 
       def configuration
         return @configuration if @configuration
-        begin
-          config = YAML::load_file(File.expand_path("~/.nexus_cli"))
-        rescue Errno::ENOENT
-          raise MissingSettingsFileException
-        end
-        validate_config(config)
-        @configuration = config
       end
 
       def nexus
@@ -40,7 +32,6 @@ module NexusCli
       end
 
       def pull_artifact(artifact, destination, overrides)
-        parse_overrides(overrides)
         split_artifact = artifact.split(":")
         if(split_artifact.size < 4)
           raise ArtifactMalformedException
@@ -60,8 +51,6 @@ module NexusCli
       end
 
       def push_artifact(artifact, file, insecure, overrides)
-        #Build up the pieces that will make up the PUT request
-        parse_overrides(overrides)
         split_artifact = artifact.split(":")
         if(split_artifact.size < 4)
           raise ArtifactMalformedException
@@ -100,7 +89,6 @@ module NexusCli
       end
 
       def get_artifact_info(artifact, overrides)
-        parse_overrides(overrides)
         split_artifact = artifact.split(":")
         if(split_artifact.size < 4)
           raise ArtifactMalformedException
@@ -114,7 +102,6 @@ module NexusCli
       
       def get_artifact_custom_info(artifact, overrides)
         raise NotNexusProException unless running_nexus_pro?
-        parse_overrides(overrides)
         split_artifact = artifact.split(":")
         if(split_artifact.size < 4)
           raise ArtifactMalformedException
@@ -131,19 +118,6 @@ module NexusCli
       end
 
       private
-
-        def validate_config(configuration)
-          ["url", "repository", "username","password"].each do |key|
-            raise InvalidSettingsException.new(key) unless configuration.has_key?(key)
-          end
-        end
-
-        def parse_overrides(overrides)
-          overrides.each do |key, value|
-            configuration[key] = value unless configuration[key].nil?
-          end
-        end
-
         def running_nexus_pro?
           return status['edition_long'] == "Professional" ? true : false
         end

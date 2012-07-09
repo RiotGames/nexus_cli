@@ -27,14 +27,14 @@ module NexusCli
     end
 
     def message
-      "The .nexus_cli file is missing the value: #{@missing_setting}"
+      "The .nexus_cli file or your overrides are missing the value: #{@missing_setting}"
     end
     status_code(102)
   end
 
   class MissingSettingsFileException < NexusCliError
     def message
-      "The .nexus_cli file is missing or corrupt."
+      "The .nexus_cli file is missing or corrupt. You can either fix the .nexus_cli file or pass the --overrides hash."
     end
     status_code(103)
   end
