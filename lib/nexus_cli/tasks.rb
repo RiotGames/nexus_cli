@@ -78,6 +78,27 @@ module NexusCli
           end
         end
 
+        desc "get_artifact_custom_info_n3 artifact", "Gets and returns the custom metadata in Nexus n3 format about a particular artifact."
+        def get_artifact_custom_info_n3(artifact)
+          begin
+            say Remote.get_artifact_custom_info_n3(artifact, options[:overrides]), :green
+          rescue NexusCliError => e
+            say e.message, :red
+            exit e.status_code
+          end
+        end
+
+        desc "update_artifact_custom_info artifact file", "Updates the artifact custom metadata by pushing the Nexus custom artifact file (n3) from your machine onto the Nexus."
+        def update_artifact_custom_info(artifact, file)
+          begin
+            Remote.update_artifact_custom_info(artifact, file, options[:insecure], options[:overrides])
+            say "Custom metadata for artifact #{artifact} has been successfully pushed to Nexus.", :green
+          rescue NexusCliError => e
+            say e.message, :red
+            exit e.status_code
+          end
+        end
+
         desc "get_nexus_configuration", "Prints out configuration from the .nexus_cli file that helps inform where artifacts will be uploaded."
         def get_nexus_configuration
           begin
