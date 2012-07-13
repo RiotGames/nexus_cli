@@ -76,4 +76,18 @@ This could mean several things:
     end
     status_code(108)
   end
+
+  class SearchParameterMalformedException < NexusCliError
+    def message
+      "Submit your search request specifying the search key, type, and value. The available search types are `equal`, `matches`, `bounded`, and `notequal`."
+    end
+    status_code(109)
+  end
+
+  class BadSearchRequestException < NexusCliError
+    def message
+      "Your request was denied by the Nexus server due to a bad request. Check that your search parameters contain valid values."
+    end
+    status_code(110)
+  end
 end

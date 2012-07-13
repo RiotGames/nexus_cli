@@ -1,5 +1,5 @@
 require 'restclient'
-require 'rexml/document'
+require 'nokogiri'
 require 'tempfile'
 require 'yaml'
 require 'open3'
@@ -21,23 +21,19 @@ module NexusCli
       end
 
       def status
-        doc = REXML::Document.new(nexus['service/local/status'].get).elements['status/data']
+        doc = Nokogiri::XML(nexus['service/local/status'].get).xpath("/status/data")
         data = Hash.new
-        data['app_name'] = doc.elements['appName'].text
-        data['version'] = doc.elements['version'].text
-        data['edition_long'] = doc.elements['editionLong'].text
-        data['state'] = doc.elements['state'].text
-        data['started_at'] = doc.elements['startedAt'].text
-        data['base_url'] = doc.elements['baseUrl'].text
+        data['app_name'] = doc.xpath("appName")[0].text
+        data['version'] = doc.xpath("version")[0].text
+        data['edition_long'] = doc.xpath("editionLong")[0].text
+        data['state'] = doc.xpath("state")[0].text
+        data['started_at'] = doc.xpath("startedAt")[0].text
+        data['base_url'] = doc.xpath("baseUrl")[0].text
         return data
       end
 
       def pull_artifact(artifact, destination, overrides)
-        split_artifact = artifact.split(":")
-        if(split_artifact.size < 4)
-          raise ArtifactMalformedException
-        end
-        group_id, artifact_id, version, extension = split_artifact
+        group_id, artifact_id, version, extension = parse_artifact_string(artifact)
         begin
           fileData = nexus['service/local/artifact/maven/redirect'].get({:params => {:r => configuration['repository'], :g => group_id, :a => artifact_id, :v => version, :e => extension}})
         rescue RestClient::ResourceNotFound
@@ -52,11 +48,7 @@ module NexusCli
       end
 
       def push_artifact(artifact, file, insecure, overrides)
-        split_artifact = artifact.split(":")
-        if(split_artifact.size < 4)
-          raise ArtifactMalformedException
-        end
-        group_id, artifact_id, version, extension = split_artifact
+        group_id, artifact_id, version, extension = parse_artifact_string(artifact)
         nexus['service/local/artifact/maven/content'].post({:hasPom => false, :g => group_id, :a => artifact_id, :v => version, :e => extension, :p => extension, :r => configuration['repository'],
           :file => File.new(file)}) do |response, request, result, &block|
           case response.code
@@ -73,25 +65,15 @@ module NexusCli
       end
 
       def delete_artifact(artifact)
-        split_artifact = artifact.split(":")
-        if(split_artifact.size < 4)
-          raise ArtifactMalformedException
-        end
-        group_id = split_artifact[0].gsub(".", "/")
-        artifact_id = split_artifact[1].gsub(".", "/")
-        version = split_artifact[2]
-
-        delete_string = "content/repositories/releases/#{group_id}/#{artifact_id}/#{version}"
+        group_id, artifact_id, version = parse_artifact_string(artifact)
+        delete_string = "content/repositories/releases/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}"
         Kernel.quietly {`curl --request DELETE #{File.join(configuration['url'], delete_string)} -u #{configuration['username']}:#{configuration['password']}`}
       end
 
       def get_artifact_info(artifact, overrides)
-        split_artifact = artifact.split(":")
-        if(split_artifact.size < 4)
-          raise ArtifactMalformedException
-        end
+        group_id, artifact_id, version, extension = parse_artifact_string(artifact)
         begin
-          nexus['service/local/artifact/maven/resolve'].get({:params => {:r => configuration['repository'], :g => split_artifact[0], :a => split_artifact[1], :v => split_artifact[2], :e => split_artifact[3]}})
+          nexus['service/local/artifact/maven/resolve'].get({:params => {:r => configuration['repository'], :g => group_id, :a => artifact_id, :v => version, :e => extension}})
         rescue RestClient::ResourceNotFound => e
           raise ArtifactNotFoundException
         end
@@ -103,12 +85,7 @@ module NexusCli
       end
 
       def get_artifact_custom_info_n3(artifact, overrides)
-        raise NotNexusProException unless running_nexus_pro?
-        split_artifact = artifact.split(":")
-        if(split_artifact.size < 4)
-          raise ArtifactMalformedException
-        end
-        group_id, artifact_id, version, extension = split_artifact
+        group_id, artifact_id, version, extension = parse_artifact_string(artifact)
         file_name = "#{artifact_id}-#{version}.#{extension}.n3"      
         get_string = "content/repositories/#{configuration['repository']}/.meta/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}/#{file_name}"
         begin
@@ -123,11 +100,7 @@ module NexusCli
         # Check if artifact exists before posting custom metadata.
         get_artifact_info(artifact, overrides)
         # Update the custom metadata using the n3 file.
-        split_artifact = artifact.split(":")
-        if(split_artifact.size < 4)
-          raise ArtifactMalformedException
-        end
-        group_id, artifact_id, version, extension = split_artifact
+        group_id, artifact_id, version, extension = parse_artifact_string(artifact)
         file_name = "#{artifact_id}-#{version}.#{extension}.n3"
         post_string = "content/repositories/#{configuration['repository']}/.meta/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}/#{file_name}"
         
@@ -170,18 +143,48 @@ module NexusCli
         end
       end
 
+      def search_artifacts(key, type, value, overrides)
+        raise NotNexusProException unless running_nexus_pro?
+        if key.empty? || type.empty? || value.empty?
+            raise SearchParameterMalformedException
+        end
+        begin
+          nexus['service/local/search/m2/freeform'].get ({params: {p: key, t: type, v: value}}) do |response, request, result, &block|
+            raise BadSearchRequestException if response.code == 400
+            doc = Nokogiri::XML(response.body).xpath("/search-results")
+            return doc.xpath("count")[0].text.to_i > 0 ? doc.to_s : "No search results."
+          end
+        rescue RestClient::ResourceNotFound => e
+          raise ArtifactNotFoundException
+        end
+      end
+
       private
         def running_nexus_pro?
           return status['edition_long'] == "Professional" ? true : false
         end
 
+        def parse_artifact_string(artifact)
+          # The artifact string is in `groupdId:artifactId:version:extension` format.
+          split_artifact = artifact.split(":")
+          if(split_artifact.size < 4)
+            raise ArtifactMalformedException
+          end
+          return split_artifact
+        end
+
         def parse_n3(data)
-          result = ""
-          data.each_line { |line|
-            tag, value = parse_n3_line(line)
-            result += "\t\t<#{tag}>#{value}</#{tag}>\n" unless tag.empty? || value.empty?
-          }
-          return "<artifact-resolution>\n\t<data>\n#{result}\t</data>\n</artifact-resolution>"
+          builder = Nokogiri::XML::Builder.new do |xml|
+            xml.send("artifact-resolution") {
+              xml.data {
+                data.each_line { |line|
+                  tag, value = parse_n3_line(line)
+                  xml.send(tag, value) unless tag.empty? || value.empty?
+                }
+              }
+            }
+          end
+          return builder.doc.root.to_s
         end
 
         def parse_n3_line(line)
