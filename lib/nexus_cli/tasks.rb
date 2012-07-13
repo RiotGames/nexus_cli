@@ -46,7 +46,7 @@ module NexusCli
         method_option :insecure,
           :type => :boolean,
           :default => false,
-          :desc => "Overrides any failures because of an 'insecure' SSL conncetion."
+          :desc => "Overrides any failures because of an 'insecure' SSL connection."
         desc "push_artifact artifact file", "Pushes an artifact from your machine onto the Nexus."
         def push_artifact(artifact, file)
           begin
@@ -88,11 +88,25 @@ module NexusCli
           end
         end
 
+        method_option :insecure,
+          :type => :boolean,
+          :default => false,
+          :desc => "Overrides any failures because of an 'insecure' SSL connection."
         desc "update_artifact_custom_info artifact file", "Updates the artifact custom metadata by pushing the Nexus custom artifact file (n3) from your machine onto the Nexus."
         def update_artifact_custom_info(artifact, file)
           begin
             Remote.update_artifact_custom_info(artifact, file, options[:insecure], options[:overrides])
             say "Custom metadata for artifact #{artifact} has been successfully pushed to Nexus.", :green
+          rescue NexusCliError => e
+            say e.message, :red
+            exit e.status_code
+          end
+        end
+
+        desc "search_artifacts key type value", "Searches for artifacts using artifact metadata and returns the result as a list with items in XML format."
+        def search_artifacts(key, type, value)
+          begin
+            say Remote.search_artifacts(key, type, value, options[:overrides]), :green
           rescue NexusCliError => e
             say e.message, :red
             exit e.status_code

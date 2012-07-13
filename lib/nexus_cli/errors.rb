@@ -76,4 +76,12 @@ This could mean several things:
     end
     status_code(108)
   end
+
+  class SearchParameterMalformedException < NexusCliError
+    def message
+      %{Submit your search request specifying the search key, type, and value.
+The available search types are `equal`, `matches`, `bounded`, and `notequal`.}
+    end
+    status_code(109)
+  end
 end

@@ -170,6 +170,23 @@ module NexusCli
         end
       end
 
+      def search_artifacts(key, type, value, overrides)
+        raise NotNexusProException unless running_nexus_pro?
+        if key.empty? || type.empty? || value.empty?
+            raise SearchParameterMalformedException
+        end
+        begin
+          doc = REXML::Document.new(nexus['service/local/search/m2/freeform'].get ({params: {p: key, t: type, v: value}})).elements['search-results']
+          if doc.elements["count"].text.to_i > 0
+            return doc
+          else
+            return "No search results."
+          end
+        rescue RestClient::ResourceNotFound => e
+          raise ArtifactNotFoundException
+        end
+      end
+
       private
         def running_nexus_pro?
           return status['edition_long'] == "Professional" ? true : false
