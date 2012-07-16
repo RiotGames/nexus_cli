@@ -21,7 +21,7 @@ module NexusCli
         def initialize(*args)
           super
           begin
-            set_remote_configuration(options[:overrides])
+            @nexus_remote = Factory.create(options[:overrides])
           rescue NexusCliError => e
             say e.message, :red
             exit e.status_code
@@ -35,7 +35,7 @@ module NexusCli
         desc "pull_artifact artifact", "Pulls an artifact from Nexus and places it on your machine."
         def pull_artifact(artifact)
           begin
-            path_to_artifact = Remote.pull_artifact(artifact, options[:destination], options[:overrides])
+            path_to_artifact = @nexus_remote.pull_artifact(artifact, options[:destination], options[:overrides])
             say "Artifact has been retrived and can be found at path: #{path_to_artifact}", :green
           rescue NexusCliError => e
             say e.message, :red
@@ -50,7 +50,7 @@ module NexusCli
         desc "push_artifact artifact file", "Pushes an artifact from your machine onto the Nexus."
         def push_artifact(artifact, file)
           begin
-            Remote.push_artifact(artifact, file, options[:insecure], options[:overrides])
+            @nexus_remote.push_artifact(artifact, file, options[:insecure], options[:overrides])
             say "Artifact #{artifact} has been successfully pushed to Nexus.", :green
           rescue NexusCliError => e
             say e.message, :red
@@ -61,7 +61,7 @@ module NexusCli
         desc "get_artifact_info artifact", "Gets and returns the metadata in XML format about a particular artifact."
         def get_artifact_info(artifact)
           begin
-            say Remote.get_artifact_info(artifact, options[:overrides]), :green
+            say @nexus_remote.get_artifact_info(artifact, options[:overrides]), :green
           rescue NexusCliError => e
             say e.message, :red
             exit e.status_code
@@ -71,7 +71,7 @@ module NexusCli
         desc "get_artifact_custom_info artifact", "Gets and returns the custom metadata in XML format about a particular artifact."
         def get_artifact_custom_info(artifact)
           begin
-            say Remote.get_artifact_custom_info(artifact, options[:overrides]), :green
+            say @nexus_remote.get_artifact_custom_info(artifact, options[:overrides]), :green
           rescue NexusCliError => e
             say e.message, :red
             exit e.status_code
@@ -81,7 +81,8 @@ module NexusCli
         desc "get_artifact_custom_info_n3 artifact", "Gets and returns the custom metadata in Nexus n3 format about a particular artifact."
         def get_artifact_custom_info_n3(artifact)
           begin
-            say Remote.get_artifact_custom_info_n3(artifact, options[:overrides]), :green
+            raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
+            say @nexus_remote.get_artifact_custom_info_n3(artifact, options[:overrides]), :green
           rescue NexusCliError => e
             say e.message, :red
             exit e.status_code
@@ -95,7 +96,8 @@ module NexusCli
         desc "update_artifact_custom_info artifact file", "Updates the artifact custom metadata by pushing the Nexus custom artifact file (n3) from your machine onto the Nexus."
         def update_artifact_custom_info(artifact, file)
           begin
-            Remote.update_artifact_custom_info(artifact, file, options[:insecure], options[:overrides])
+            raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
+            @nexus_remote.update_artifact_custom_info(artifact, file, options[:insecure], options[:overrides])
             say "Custom metadata for artifact #{artifact} has been successfully pushed to Nexus.", :green
           rescue NexusCliError => e
             say e.message, :red
@@ -106,7 +108,8 @@ module NexusCli
         desc "search_artifacts key type value", "Searches for artifacts using artifact metadata and returns the result as a list with items in XML format."
         def search_artifacts(key, type, value)
           begin
-            say Remote.search_artifacts(key, type, value, options[:overrides]), :green
+            raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
+            say @nexus_remote.search_artifacts(key, type, value, options[:overrides]), :green
           rescue NexusCliError => e
             say e.message, :red
             exit e.status_code
@@ -116,7 +119,7 @@ module NexusCli
         desc "get_nexus_configuration", "Prints out configuration from the .nexus_cli file that helps inform where artifacts will be uploaded."
         def get_nexus_configuration
           begin
-            config = Remote.configuration
+            config = @nexus_remote.configuration
             say "********* Reading CLI configuration from #{File.expand_path('~/.nexus_cli')} *********", :blue
             say "Nexus URL: #{config['url']}", :blue
             say "Nexus Repository: #{config['repository']}", :blue
@@ -129,7 +132,7 @@ module NexusCli
         desc "get_nexus_status", "Prints out information about the Nexus instance."
         def get_nexus_status
           begin
-            data = Remote.status
+            data = @nexus_remote.status
             say "********* Getting Nexus status from #{data['base_url']} *********", :blue
             say "Application Name: #{data['app_name']}", :blue
             say "Version: #{data['version']}", :blue
@@ -142,26 +145,6 @@ module NexusCli
             exit e.status_code
           end
         end
-
-        private
-          def set_remote_configuration(overrides)
-            begin
-              config = YAML::load_file(File.expand_path("~/.nexus_cli"))
-            rescue
-            end
-            if config.nil? && (overrides.nil? || overrides.empty?)
-              raise MissingSettingsFileException
-            end
-            overrides.each{|key, value| config[key] = value} unless overrides.nil? || overrides.empty?
-            validate_config(config)
-            Remote.configuration = config
-          end
-          
-          def validate_config(configuration)
-            ["url", "repository", "username","password"].each do |key|
-              raise InvalidSettingsException.new(key) unless configuration.has_key?(key)
-            end
-          end
       end
     end
   end
