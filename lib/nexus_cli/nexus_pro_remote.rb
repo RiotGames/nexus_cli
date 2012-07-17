@@ -29,8 +29,12 @@ module NexusCli
       file_name = "#{artifact_id}-#{version}.#{extension}.n3"
       post_string = "content/repositories/#{configuration['repository']}/.meta/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}/#{file_name}"
       
-      # Read in nexus n3 file.
-      nexus_n3 = get_artifact_custom_info_n3(artifact, overrides)
+      # Read in nexus n3 file. If this is a newly-added artifact, there will be no n3 file so escape the exception.
+      begin
+        nexus_n3 = get_artifact_custom_info_n3(artifact, overrides)
+      rescue ArtifactNotFoundException
+        nexus_n3 = ""
+      end
       # Read in local n3 file.
       local_n3 = File.open(file).read
 
