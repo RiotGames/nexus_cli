@@ -1,15 +1,20 @@
 require 'aruba/cucumber'
-
 $:.push "#{File.dirname(__FILE__)}/../../lib/"
 require 'nexus_cli'
 require 'rspec'
 
-After do |scenario|
-  FileUtils.rm_f("mytar-1.0.3.tgz")
+def get_overrides
+  @overrides ||= {:url => 'http://localhost:8081/nexus', :repository => 'releases', :username => 'deployment', :password => 'deployment123'}
+end
 
-  tmp_path = File.join(ENV["TMPDIR"], "mytar-1.0.3.tgz")
-  FileUtils.rm_f(tmp_path)
+def temp_dir
+  @tmpdir ||= Dir.mktmpdir
+end
 
-  NexusCli::Remote.delete_artifact('com.foo.bar:myFile:1.0.0:tgz')
-  FileUtils.rm_f("myFile.tgz")
+def nexus_remote
+  @nexus_remote ||= NexusCli::Factory.create(get_overrides)
+end
+
+at_exit do
+  FileUtils.rm_rf(temp_dir)
 end

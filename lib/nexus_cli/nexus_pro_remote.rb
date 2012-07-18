@@ -6,11 +6,11 @@ require 'yaml'
 module NexusCli
   class ProRemote < OSSRemote
       
-    def get_artifact_custom_info(artifact, overrides)
-      parse_n3(get_artifact_custom_info_n3(artifact, overrides))
+    def get_artifact_custom_info(artifact)
+      parse_n3(get_artifact_custom_info_n3(artifact))
     end
 
-    def get_artifact_custom_info_n3(artifact, overrides)
+    def get_artifact_custom_info_n3(artifact)
       group_id, artifact_id, version, extension = parse_artifact_string(artifact)
       file_name = "#{artifact_id}-#{version}.#{extension}.n3"      
       get_string = "content/repositories/#{configuration['repository']}/.meta/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}/#{file_name}"
@@ -21,9 +21,9 @@ module NexusCli
       end
     end
 
-    def update_artifact_custom_info(artifact, file, insecure, overrides)
+    def update_artifact_custom_info(artifact, file, insecure)
       # Check if artifact exists before posting custom metadata.
-      get_artifact_info(artifact, overrides)
+      get_artifact_info(artifact)
       # Update the custom metadata using the n3 file.
       group_id, artifact_id, version, extension = parse_artifact_string(artifact)
       file_name = "#{artifact_id}-#{version}.#{extension}.n3"
@@ -35,6 +35,7 @@ module NexusCli
       rescue ArtifactNotFoundException
         nexus_n3 = ""
       end
+
       # Read in local n3 file.
       local_n3 = File.open(file).read
 
@@ -72,7 +73,7 @@ module NexusCli
       end
     end
 
-    def search_artifacts(key, type, value, overrides)
+    def search_artifacts(key, type, value)
       if key.empty? || type.empty? || value.empty?
           raise SearchParameterMalformedException
       end

@@ -29,7 +29,7 @@ module NexusCli
       return data
     end
 
-    def pull_artifact(artifact, destination, overrides)
+    def pull_artifact(artifact, destination)
       group_id, artifact_id, version, extension = parse_artifact_string(artifact)
       begin
         fileData = nexus['service/local/artifact/maven/redirect'].get({:params => {:r => configuration['repository'], :g => group_id, :a => artifact_id, :v => version, :e => extension}})
@@ -44,7 +44,7 @@ module NexusCli
       File.expand_path(artifact.path)
     end
 
-    def push_artifact(artifact, file, insecure, overrides)
+    def push_artifact(artifact, file)
       group_id, artifact_id, version, extension = parse_artifact_string(artifact)
       nexus['service/local/artifact/maven/content'].post({:hasPom => false, :g => group_id, :a => artifact_id, :v => version, :e => extension, :p => extension, :r => configuration['repository'],
         :file => File.new(file)}) do |response, request, result, &block|
@@ -67,7 +67,7 @@ module NexusCli
       Kernel.quietly {`curl --request DELETE #{File.join(configuration['url'], delete_string)} -u #{configuration['username']}:#{configuration['password']}`}
     end
 
-    def get_artifact_info(artifact, overrides)
+    def get_artifact_info(artifact)
       group_id, artifact_id, version, extension = parse_artifact_string(artifact)
       begin
         nexus['service/local/artifact/maven/resolve'].get({:params => {:r => configuration['repository'], :g => group_id, :a => artifact_id, :v => version, :e => extension}})
