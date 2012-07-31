@@ -36,6 +36,10 @@ module NexusCli
       rescue RestClient::ResourceNotFound
         raise ArtifactNotFoundException
       end
+      if version.casecmp("latest")
+        doc = Nokogiri::XML(get_artifact_info(artifact))
+        version = doc.xpath("//version").first.content()
+      end
       artifact = nil
       destination = File.join(File.expand_path(destination || "."), "#{artifact_id}-#{version}.#{extension}")
       artifact = File.open(destination, 'w')
@@ -84,7 +88,9 @@ module NexusCli
       if(split_artifact.size < 4)
         raise ArtifactMalformedException
       end
-      return split_artifact
-    end  
+      group_id, artifact_id, version, extension = split_artifact
+      version.upcase! if version.casecmp("latest")
+      return group_id, artifact_id, version, extension
+    end
   end 
 end
