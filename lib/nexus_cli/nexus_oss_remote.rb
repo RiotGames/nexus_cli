@@ -84,7 +84,9 @@ module NexusCli
       if(split_artifact.size < 4)
         raise ArtifactMalformedException
       end
-      return split_artifact
-    end  
+      group_id, artifact_id, version, extension = split_artifact
+      version.upcase! if version.casecmp("latest")
+      return group_id, artifact_id, version, extension
+    end
   end 
 end
