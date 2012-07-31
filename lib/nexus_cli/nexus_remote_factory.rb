@@ -7,7 +7,7 @@ module NexusCli
     class << self
 
       def create(overrides)
-        @configuration = parse_configuration(overrides)
+        @configuration = Configuration::parse(overrides)
         running_nexus_pro? ? ProRemote.new(overrides) : OSSRemote.new(overrides)
       end
 
@@ -34,25 +34,6 @@ module NexusCli
       private
         def running_nexus_pro?
           return status['edition_long'] == "Professional" ? true : false
-        end
-
-        def parse_configuration(overrides)
-          begin
-            config = YAML::load_file(File.expand_path("~/.nexus_cli"))
-          rescue
-          end
-          if config.nil? && (overrides.nil? || overrides.empty?)
-            raise MissingSettingsFileException
-          end
-          overrides.each{|key, value| config[key] = value} unless overrides.nil? || overrides.empty?
-          validate_config(config)
-          config
-        end
-        
-        def validate_config(configuration)
-          ["url", "repository", "username","password"].each do |key|
-            raise InvalidSettingsException.new(key) unless configuration.has_key?(key)
-          end
         end
     end
   end

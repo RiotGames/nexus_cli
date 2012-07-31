@@ -6,7 +6,7 @@ module NexusCli
   class OSSRemote
 
     def initialize(overrides)
-      @configuration = parse_configuration(overrides)
+      @configuration = Configuration::parse(overrides)
     end
 
     def configuration
@@ -79,31 +79,12 @@ module NexusCli
     end
 
     private
-      def parse_artifact_string(artifact)
-        split_artifact = artifact.split(":")
-        if(split_artifact.size < 4)
-          raise ArtifactMalformedException
-        end
-        return split_artifact
+    def parse_artifact_string(artifact)
+      split_artifact = artifact.split(":")
+      if(split_artifact.size < 4)
+        raise ArtifactMalformedException
       end
-  
-      def parse_configuration(overrides)
-        begin
-          config = YAML::load_file(File.expand_path("~/.nexus_cli"))
-        rescue
-        end
-        if config.nil? && (overrides.nil? || overrides.empty?)
-          raise MissingSettingsFileException
-        end
-        overrides.each{|key, value| config[key] = value} unless overrides.nil? || overrides.empty?
-        validate_config(config)
-        config
-      end
-      
-      def validate_config(configuration)
-        ["url", "repository", "username","password"].each do |key|
-          raise InvalidSettingsException.new(key) unless configuration.has_key?(key)
-        end
-      end
+      return split_artifact
+    end  
   end 
 end
