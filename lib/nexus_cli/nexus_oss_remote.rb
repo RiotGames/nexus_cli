@@ -36,6 +36,10 @@ module NexusCli
       rescue RestClient::ResourceNotFound
         raise ArtifactNotFoundException
       end
+      if version.casecmp("latest")
+        doc = Nokogiri::XML(get_artifact_info(artifact))
+        version = doc.xpath("//version").first.content()
+      end
       artifact = nil
       destination = File.join(File.expand_path(destination || "."), "#{artifact_id}-#{version}.#{extension}")
       artifact = File.open(destination, 'w')
