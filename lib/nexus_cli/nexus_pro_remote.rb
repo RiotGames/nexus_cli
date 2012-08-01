@@ -21,7 +21,7 @@ module NexusCli
       end
     end
 
-    def update_artifact_custom_info(artifact, file, insecure)
+    def update_artifact_custom_info(artifact, file)
       # Check if artifact exists before posting custom metadata.
       get_artifact_info(artifact)
       # Update the custom metadata using the n3 file.
@@ -31,7 +31,7 @@ module NexusCli
 
       # Read in nexus n3 file. If this is a newly-added artifact, there will be no n3 file so escape the exception.
       begin
-        nexus_n3 = get_artifact_custom_info_n3(artifact, overrides)
+        nexus_n3 = get_artifact_custom_info_n3(artifact)
       rescue ArtifactNotFoundException
         nexus_n3 = ""
       end
