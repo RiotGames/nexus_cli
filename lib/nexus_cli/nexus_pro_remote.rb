@@ -21,7 +21,7 @@ module NexusCli
       end
     end
 
-    def update_artifact_custom_info(artifact, file, insecure)
+    def update_artifact_custom_info(artifact, file)
       # Check if artifact exists before posting custom metadata.
       get_artifact_info(artifact)
       # Update the custom metadata using the n3 file.

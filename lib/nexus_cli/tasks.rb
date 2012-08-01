@@ -12,6 +12,7 @@ module NexusCli
         map 'custom' => :get_artifact_custom_info
         map 'config' => :get_nexus_configuration
         map 'status' => :get_nexus_status
+        map 'search' => :search_for_artifacts
 
         class_option :overrides,
           :type => :hash,
@@ -64,6 +65,16 @@ module NexusCli
           end
         end
 
+        desc "search_for_artifacts", "Prints out some information about some junk."
+        def search_for_artifacts(artifact)
+          begin
+            @nexus_remote.search_for_artifacts(artifact).each{|output| say output, :green}
+          rescue NexusCliError => e
+            say e.message, :red
+            exit e.status_code
+          end
+        end
+
         desc "get_artifact_custom_info artifact", "Gets and returns the custom metadata in XML format about a particular artifact."
         def get_artifact_custom_info(artifact)
           begin
@@ -85,15 +96,11 @@ module NexusCli
           end
         end
 
-        method_option :insecure,
-          :type => :boolean,
-          :default => false,
-          :desc => "Overrides any failures because of an 'insecure' SSL connection."
         desc "update_artifact_custom_info artifact file", "Updates the artifact custom metadata by pushing the Nexus custom artifact file (n3) from your machine onto the Nexus."
         def update_artifact_custom_info(artifact, file)
           begin
             raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-            @nexus_remote.update_artifact_custom_info(artifact, file, options[:insecure])
+            @nexus_remote.update_artifact_custom_info(artifact, file)
             say "Custom metadata for artifact #{artifact} has been successfully pushed to Nexus.", :green
           rescue NexusCliError => e
             say e.message, :red
