@@ -11,6 +11,7 @@ Feature: Use the Nexus CLI
       """
     And the exit status should be 0
 
+  @push
   Scenario: Push an Artifact
     When I push an artifact with the GAV of "com.test:mytest:1.0.0:tgz"
     Then the output should contain:
@@ -26,10 +27,16 @@ Feature: Use the Nexus CLI
     Artifact has been retrived and can be found at path:
     """
     And the exit status should be 0
+
+  Scenario: Pull the LATEST of an artifact
+    When I pull an artifact with the GAV of "com.test:mytest:latest:tgz" to a temp directory
+    Then I should have a copy of the "mytest-1.0.0.tgz" artifact in a temp directory
+    And the exit status should be 0
   
   Scenario: Pull an artifact to a specific place
     When I pull an artifact with the GAV of "com.test:mytest:1.0.0:tgz" to a temp directory
     Then I should have a copy of the "mytest-1.0.0.tgz" artifact in a temp directory
+    And the exit status should be 0
 
   Scenario: Get an artifact's info
     When I call the nexus "info com.test:mytest:1.0.0:tgz" command
@@ -48,6 +55,7 @@ Feature: Use the Nexus CLI
     """
     And the exit status should be 0
 
+  @delete
   Scenario: Attempt to delete an artifact
     When I delete an artifact with the GAV of "com.test:mytest:1.0.0:tgz"
     And I call the nexus "info com.test:mytest:1.0.0:tgz" command

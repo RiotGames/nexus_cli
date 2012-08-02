@@ -1,3 +1,5 @@
+require 'extlib'
+
 module NexusCli
   module Configuration
     class << self
@@ -14,7 +16,7 @@ module NexusCli
 
       def validate_config(configuration)
         ["url", "repository", "username","password"].each do |key|
-          raise InvalidSettingsException.new(key) unless configuration.has_key?(key)
+          raise InvalidSettingsException.new(key) if configuration[key].blank?
         end
       end
     end
