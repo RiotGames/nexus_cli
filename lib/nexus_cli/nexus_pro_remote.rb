@@ -31,7 +31,7 @@ module NexusCli
 
       # Read in nexus n3 file. If this is a newly-added artifact, there will be no n3 file so escape the exception.
       begin
-        nexus_n3 = get_artifact_custom_info_n3(artifact, overrides)
+        nexus_n3 = get_artifact_custom_info_n3(artifact)
       rescue ArtifactNotFoundException
         nexus_n3 = ""
       end
@@ -73,19 +73,37 @@ module NexusCli
       end
     end
 
-    def search_artifacts(key, type, value)
-      if key.empty? || type.empty? || value.empty?
-        raise SearchParameterMalformedException
-      end
+    def clear_artifact_custom_info(artifact)
+      # Check if artifact exists before posting custom metadata.
+      get_artifact_info(artifact)
+      group_id, artifact_id, version, extension = parse_artifact_string(artifact)
+      file_name = "#{artifact_id}-#{version}.#{extension}.n3"
+      post_string = "content/repositories/#{configuration['repository']}/.meta/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}/#{file_name}"
+      n3_temp = Tempfile.new("nexus_n3")
       begin
-        nexus['service/local/search/m2/freeform'].get ({params: {p: key, t: type, v: value}}) do |response, request, result, &block|
-          raise BadSearchRequestException if response.code == 400
-          doc = Nokogiri::XML(response.body).xpath("/search-results")
-          return doc.xpath("count")[0].text.to_i > 0 ? doc.to_s : "No search results."
-        end
-      rescue RestClient::ResourceNotFound => e
-        raise ArtifactNotFoundException
+        n3_temp.write("<urn:maven/artifact##{group_id}:#{artifact_id}:#{version}::#{extension}> a <urn:maven#artifact> .")
+        n3_temp.rewind
+        Kernel.quietly {`curl -T #{n3_temp.path} #{File.join(configuration['url'], post_string)} -u #{configuration['username']}:#{configuration['password']}`}
+      ensure
+        n3_temp.close
+        n3_temp.unlink
       end
+    end
+
+    def search_artifacts(params)
+      docs = Array.new
+      parse_search_params(params).each { |param|
+        begin
+          nexus['service/local/search/m2/freeform'].get ({params: {p: param[0], t: param[1], v: param[2]}}) do |response|
+            raise BadSearchRequestException if response.code == 400
+            docs.push(Nokogiri::XML(response.body).xpath("/search-results/data"))
+          end
+        rescue RestClient::ResourceNotFound => e
+          raise ArtifactNotFoundException
+        end
+      }
+      result = docs.inject {|memo,doc| get_common_set(memo, doc)}
+      return result.nil? ? "" : result.to_xml(:indent => 4)
     end
 
     private
@@ -107,6 +125,18 @@ module NexusCli
       tag = line.match(/#(\w*)>/) ? "#{$1}" : ""
       value = line.match(/"([^"]*)"/)  ? "#{$1}" : ""
       return tag, value
+    end
+
+    def parse_search_params(params)
+      parsed_params = params.split(",").collect {|param| param.split(":")}
+      parsed_params.each { |param|
+        raise SearchParameterMalformedException unless param.count == 3
+      }
+      return parsed_params
+    end
+
+    def get_common_set(set1, set2)
+      return Nokogiri::XML((set1.to_s.split("\n").collect {|x| x.to_s.strip} & set2.to_s.split("\n").collect {|x| x.to_s.strip}).join).root
     end
   end
 end

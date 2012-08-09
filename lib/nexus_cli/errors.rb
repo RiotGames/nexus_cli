@@ -79,7 +79,7 @@ This could mean several things:
 
   class SearchParameterMalformedException < NexusCliError
     def message
-      "Submit your search request specifying the search key, type, and value. The available search types are `equal`, `matches`, `bounded`, and `notequal`."
+      "Submit your search request specifying one or more 3 colon-separated values: `key:type:value`. The available search types are `equal`, `matches`, `bounded`, and `notequal`."
     end
     status_code(109)
   end

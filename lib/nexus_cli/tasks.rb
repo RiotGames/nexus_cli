@@ -29,7 +29,7 @@ module NexusCli
           end
         end
 
-        method_option :destination, 
+        method_option :destination,
           :type => :string,
           :default => nil,
           :desc => "A different folder other than the current working directory."
@@ -108,11 +108,23 @@ module NexusCli
           end
         end
 
-        desc "search_artifacts key type value", "Searches for artifacts using artifact metadata and returns the result as a list with items in XML format."
-        def search_artifacts(key, type, value)
+        desc "clear_artifact_custom_info artifact", "Clears the artifact custom metadata."
+        def clear_artifact_custom_info(artifact)
           begin
             raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-            say @nexus_remote.search_artifacts(key, type, value), :green
+            @nexus_remote.clear_artifact_custom_info(artifact)
+            say "Custom metadata for artifact #{artifact} has been successfully cleared.", :green
+          rescue NexusCliError => e
+            say e.message, :red
+            exit e.status_code
+          end
+        end
+
+        desc "search_artifacts param1,param2,... ", "Searches for artifacts using artifact metadata and returns the result as a list with items in XML format."
+        def search_artifacts(params)
+          begin
+            raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
+            say (s = @nexus_remote.search_artifacts(params)) == "" ? "No search results." : s, :green
           rescue NexusCliError => e
             say e.message, :red
             exit e.status_code
