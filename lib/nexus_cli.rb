@@ -12,5 +12,9 @@ module NexusCli
     def root
       @root ||= Pathname.new(File.expand_path('../', File.dirname(__FILE__)))
     end
+
+    def ui
+      @ui ||= Thor::Shell::Color.new
+    end
   end
 end

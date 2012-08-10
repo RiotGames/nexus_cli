@@ -20,6 +20,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'rest-client'
   s.add_dependency 'nokogiri'
   s.add_dependency 'extlib'
+  s.add_dependency 'json'
 
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'aruba'

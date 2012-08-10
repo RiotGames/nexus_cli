@@ -2,4 +2,9 @@
 $:.push File.expand_path("../../lib", __FILE__)
 require 'nexus_cli'
 
-NexusCli::Cli.start
+begin
+  NexusCli::Cli.start
+rescue NexusCli::NexusCliError => e
+  NexusCli.ui.say e.message, :red
+  exit e.status_code
+end

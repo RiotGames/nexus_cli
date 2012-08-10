@@ -1,4 +1,5 @@
 require 'aruba/api'
+require 'json'
 World(Aruba::Api)
 
 When /^I call the nexus "(.*?)" command$/ do |command|
@@ -23,4 +24,18 @@ end
 
 When /^I delete an artifact with the GAV of "(.*)"$/ do |gav|
   nexus_remote.delete_artifact(gav)
+end
+
+When /^I edit the "(.*?)" files "(.*?)" field to true$/ do |file, field|
+  Dir.chdir('tmp/aruba') do
+    json = JSON.parse(File.read(File.join(File.expand_path("."), file)))
+    File.open(File.join(File.expand_path("."), file), "w+") do |opened|
+      json["data"]["globalRestApiSettings"][field] = true
+      opened.write(JSON.pretty_generate(json))
+    end
+  end
+end
+
+Then /^the file "([^"]*)" should contain:$/ do |file, partial_content|
+  check_file_content(file, partial_content, true)
 end

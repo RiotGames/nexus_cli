@@ -1,3 +1,5 @@
+require 'json'
+
 module NexusCli
   class NexusCliError < StandardError
     class << self
@@ -89,5 +91,18 @@ This could mean several things:
       "Your request was denied by the Nexus server due to a bad request. Check that your search parameters contain valid values."
     end
     status_code(110)
+  end
+
+  class BadSettingsException < NexusCliError
+    def initialize(body)
+      @server_response = JSON.pretty_generate(JSON.parse(body))
+    end
+
+    def message
+      %{Your global_settings.json file is malformed and could not be uploaded to Nexus.
+The output from the server was:
+  #{@server_response}}
+    end
+    status_code(111)
   end
 end

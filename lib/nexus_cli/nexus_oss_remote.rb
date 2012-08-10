@@ -1,6 +1,7 @@
 require 'restclient'
 require 'nokogiri'
 require 'yaml'
+require 'json'
 
 module NexusCli
   class OSSRemote
@@ -50,7 +51,7 @@ module NexusCli
     def push_artifact(artifact, file)
       group_id, artifact_id, version, extension = parse_artifact_string(artifact)
       nexus['service/local/artifact/maven/content'].post({:hasPom => false, :g => group_id, :a => artifact_id, :v => version, :e => extension, :p => extension, :r => configuration['repository'],
-      :file => File.new(file)}) do |response, request, result, &block|
+      :file => File.new(file)}) do |response|
         case response.code
         when 400
           raise BadUploadRequestException
@@ -83,10 +84,35 @@ module NexusCli
 
     def search_for_artifacts(artifact)
       group_id, artifact_id = artifact.split(":")
-      nexus['service/local/data_index'].get ({params: {g: group_id, a: artifact_id}}) do |response, request, result, &block|
+      nexus['service/local/data_index'].get({:params => {:g => group_id, :a => artifact_id}}) do |response|
         doc = Nokogiri::XML(response.body)
         return format_search_results(doc, group_id, artifact_id)
       end
+    end
+
+    def get_global_settings
+      nexus['service/local/global_settings/current'].get({:accept => "application/json"}) do |response|
+        pretty_json = JSON.pretty_generate(JSON.parse(response.body))
+        destination = File.join(File.expand_path("."), "global_settings.json")
+        artifact_file = File.open(destination, 'wb') do |file|
+          file.write(pretty_json)
+        end
+      end
+    end
+
+    def upload_global_settings
+      global_settings_file = File.join(File.expand_path("."), "global_settings.json")
+      nexus['service/local/global_settings/current'].put(File.read(global_settings_file), {:content_type => "application/json"}) do |response|
+        case response.code
+        when 400
+          raise BadSettingsException.new(response.body)
+        end
+      end
+    end
+
+    def reset_global_settings
+      default_json = nexus['service/local/global_settings/default'].get({:accept => "application/json"})
+      nexus['service/local/global_settings/current'].put(default_json, {:content_type => "application/json"})
     end
 
     private

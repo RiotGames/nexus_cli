@@ -35,118 +35,86 @@ module NexusCli
           :desc => "A different folder other than the current working directory."
         desc "pull_artifact artifact", "Pulls an artifact from Nexus and places it on your machine."
         def pull_artifact(artifact)
-          begin
-            path_to_artifact = @nexus_remote.pull_artifact(artifact, options[:destination])
-            say "Artifact has been retrived and can be found at path: #{path_to_artifact}", :green
-          rescue NexusCliError => e
-            say e.message, :red
-            exit e.status_code
-          end
+          path_to_artifact = @nexus_remote.pull_artifact(artifact, options[:destination])
+          say "Artifact has been retrived and can be found at path: #{path_to_artifact}", :green
         end
 
         desc "push_artifact artifact file", "Pushes an artifact from your machine onto the Nexus."
         def push_artifact(artifact, file)
-          begin
-            @nexus_remote.push_artifact(artifact, file)
-            say "Artifact #{artifact} has been successfully pushed to Nexus.", :green
-          rescue NexusCliError => e
-            say e.message, :red
-            exit e.status_code
-          end
+          @nexus_remote.push_artifact(artifact, file)
+          say "Artifact #{artifact} has been successfully pushed to Nexus.", :green
         end
 
         desc "get_artifact_info artifact", "Gets and returns the metadata in XML format about a particular artifact."
         def get_artifact_info(artifact)
-          begin
-            say @nexus_remote.get_artifact_info(artifact), :green
-          rescue NexusCliError => e
-            say e.message, :red
-            exit e.status_code
-          end
+          say @nexus_remote.get_artifact_info(artifact), :green
         end
 
         desc "search_for_artifacts", "Prints out some information about some junk."
         def search_for_artifacts(artifact)
-          begin
-            @nexus_remote.search_for_artifacts(artifact).each{|output| say output, :green}
-          rescue NexusCliError => e
-            say e.message, :red
-            exit e.status_code
-          end
+          @nexus_remote.search_for_artifacts(artifact).each{|output| say output, :green}
         end
 
         desc "get_artifact_custom_info artifact", "Gets and returns the custom metadata in XML format about a particular artifact."
         def get_artifact_custom_info(artifact)
-          begin
-            say @nexus_remote.get_artifact_custom_info(artifact), :green
-          rescue NexusCliError => e
-            say e.message, :red
-            exit e.status_code
-          end
+          say @nexus_remote.get_artifact_custom_info(artifact), :green
         end
 
         desc "get_artifact_custom_info_n3 artifact", "Gets and returns the custom metadata in Nexus n3 format about a particular artifact."
-        def get_artifact_custom_info_n3(artifact)
-          begin
-            raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-            say @nexus_remote.get_artifact_custom_info_n3(artifact), :green
-          rescue NexusCliError => e
-            say e.message, :red
-            exit e.status_code
-          end
+        def get_artifact_custom_info_n3(artifact)          
+          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
+          say @nexus_remote.get_artifact_custom_info_n3(artifact), :green
         end
 
         desc "update_artifact_custom_info artifact file", "Updates the artifact custom metadata by pushing the Nexus custom artifact file (n3) from your machine onto the Nexus."
         def update_artifact_custom_info(artifact, file)
-          begin
-            raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-            @nexus_remote.update_artifact_custom_info(artifact, file)
-            say "Custom metadata for artifact #{artifact} has been successfully pushed to Nexus.", :green
-          rescue NexusCliError => e
-            say e.message, :red
-            exit e.status_code
-          end
+          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
+          @nexus_remote.update_artifact_custom_info(artifact, file)
+          say "Custom metadata for artifact #{artifact} has been successfully pushed to Nexus.", :green
         end
 
         desc "search_artifacts key type value", "Searches for artifacts using artifact metadata and returns the result as a list with items in XML format."
         def search_artifacts(key, type, value)
-          begin
-            raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-            say @nexus_remote.search_artifacts(key, type, value), :green
-          rescue NexusCliError => e
-            say e.message, :red
-            exit e.status_code
-          end
+          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
+          say @nexus_remote.search_artifacts(key, type, value), :green
         end
 
         desc "get_nexus_configuration", "Prints out configuration from the .nexus_cli file that helps inform where artifacts will be uploaded."
         def get_nexus_configuration
-          begin
-            config = @nexus_remote.configuration
-            say "********* Reading CLI configuration from #{File.expand_path('~/.nexus_cli')} *********", :blue
-            say "Nexus URL: #{config['url']}", :blue
-            say "Nexus Repository: #{config['repository']}", :blue
-          rescue NexusCliError => e
-            say e.message, :red
-            exit e.status_code
-          end
+          config = @nexus_remote.configuration
+          say "********* Reading CLI configuration from #{File.expand_path('~/.nexus_cli')} *********", :blue
+          say "Nexus URL: #{config['url']}", :blue
+          say "Nexus Repository: #{config['repository']}", :blue
         end
 
         desc "get_nexus_status", "Prints out information about the Nexus instance."
         def get_nexus_status
-          begin
-            data = @nexus_remote.status
-            say "********* Getting Nexus status from #{data['base_url']} *********", :blue
-            say "Application Name: #{data['app_name']}", :blue
-            say "Version: #{data['version']}", :blue
-            say "Edition: #{data['edition_long']}", :blue
-            say "State: #{data['state']}", :blue
-            say "Started At: #{data['started_at']}", :blue
-            say "Base URL: #{data['base_url']}", :blue
-          rescue NexusCliError => e
-            say e.message, :red
-            exit e.status_code
-          end
+          data = @nexus_remote.status
+          say "********* Getting Nexus status from #{data['base_url']} *********", :blue
+          say "Application Name: #{data['app_name']}", :blue
+          say "Version: #{data['version']}", :blue
+          say "Edition: #{data['edition_long']}", :blue
+          say "State: #{data['state']}", :blue
+          say "Started At: #{data['started_at']}", :blue
+          say "Base URL: #{data['base_url']}", :blue
+        end
+
+        desc "get_global_settings", "Prints out your Nexus' current setttings and saves them to a file."
+        def get_global_settings
+          @nexus_remote.get_global_settings
+          say "Your current Nexus global settings have been written to the file: global_settings.json", :blue
+        end
+
+        desc "upload_global_settings", "Uploads a global_settings.json file to your Nexus to update its settings."
+        def upload_global_settings
+          @nexus_remote.upload_global_settings
+          say "Your global_settings.json file has been uploaded to Nexus", :blue
+        end
+
+        desc "reset_global_settings", "Resets your Nexus global_settings to their out-of-the-box defaults."
+        def reset_global_settings
+          @nexus_remote.reset_global_settings
+          say "Your Nexus global settings have been reset to their default values", :blue
         end
       end
     end

@@ -7,7 +7,6 @@ Feature: Use the Nexus CLI
     Then the output should contain:
       """
       Application Name: Sonatype Nexus
-      Version: 2.0.5
       """
     And the exit status should be 0
 
@@ -64,3 +63,40 @@ Feature: Use the Nexus CLI
     The artifact you requested information for could not be found. Please ensure it exists inside the Nexus.
     """
     And the exit status should be 101
+
+  Scenario: Get the current global settings of Nexus
+    When I call the nexus "get_global_settings" command
+    Then the output should contain:
+    """
+    Your current Nexus global settings have been written to the file: global_settings.json
+    """
+    And a file named "global_settings.json" should exist
+    And the exit status should be 0
+
+  Scenario: Update the global settings of Nexus
+    When I call the nexus "get_global_settings" command
+    And I edit the "global_settings.json" files "forceBaseUrl" field to true
+    And I call the nexus "upload_global_settings" command
+    Then the output should contain:
+    """
+    Your global_settings.json file has been uploaded to Nexus
+    """
+    When I call the nexus "get_global_settings" command
+    Then the file "global_settings.json" should contain:
+    """
+    "forceBaseUrl": true
+    """
+    And the exit status should be 0
+
+  Scenario: Reset the global settings of Nexus
+    When I call the nexus "reset_global_settings" command
+    Then the output should contain:
+    """
+    Your Nexus global settings have been reset to their default values
+    """
+    When I call the nexus "get_global_settings" command
+    Then the file "global_settings.json" should contain:
+    """
+    "forceBaseUrl": false
+    """
+    And the exit status should be 0
