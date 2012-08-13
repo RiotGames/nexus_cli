@@ -116,6 +116,25 @@ module NexusCli
           @nexus_remote.reset_global_settings
           say "Your Nexus global settings have been reset to their default values", :blue
         end
+
+        desc "create_repository name", "Creates a new Repository with the provided name."
+        def create_repository(name)
+          if @nexus_remote.create_repository(name)
+            say "A new Repository named #{name} has been created.", :blue
+          end
+        end
+
+        desc "delete_repository name", "Deletes a Repository with the provided name."
+        def delete_repository(name)
+          if @nexus_remote.delete_repository(name)
+            say "The Repository named #{name} has been deleted.", :blue
+          end
+        end
+
+        desc "get_repository_info name", "Finds and returns information about the provided Repository."
+        def get_repository_info(name)
+          say @nexus_remote.get_repository_info(name), :green
+        end
       end
     end
   end

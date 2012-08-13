@@ -100,3 +100,20 @@ Feature: Use the Nexus CLI
     "forceBaseUrl": false
     """
     And the exit status should be 0
+
+  Scenario: Create a new repository in Nexus
+    When I call the nexus "create_repository Artifacts" command
+    Then the output should contain:
+    """
+    A new Repository named Artifacts has been created.
+    """
+    And the exit status should be 0
+
+  Scenario: Delete a repository in Nexus
+    When I call the nexus "delete_repository Artifacts" command
+    And I call the nexus "get_repository_info Artifacts" command
+    Then the output should contain:
+    """
+    The repository you requested information could not be found. Please ensure the repository exists.
+    """
+    And the exit status should be 114
