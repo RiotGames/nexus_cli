@@ -25,7 +25,7 @@ def get_overrides_string
 end
 
 def get_overrides
-  @overrides ||= {'url' => 'http://localhost:8081/nexus', 'repository' => 'releases', 'username' => 'deployment', 'password' => 'deployment123'}
+  @overrides ||= {'url' => 'http://localhost:8081/nexus', 'repository' => 'releases', 'username' => 'admin', 'password' => 'admin123'}
 end
 
 def temp_dir

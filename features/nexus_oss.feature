@@ -68,9 +68,9 @@ Feature: Use the Nexus CLI
     When I call the nexus "get_global_settings" command
     Then the output should contain:
       """
-      Your current Nexus global settings have been written to the file: global_settings.json
+      Your current Nexus global settings have been written to the file: ~/.nexus/global_settings.json
       """
-    And a file named "global_settings.json" should exist
+    And a file named "global_settings.json" should exist in my nexus folder
     And the exit status should be 0
 
   Scenario: Update the global settings of Nexus
@@ -82,10 +82,19 @@ Feature: Use the Nexus CLI
       Your global_settings.json file has been uploaded to Nexus
       """
     When I call the nexus "get_global_settings" command
-    Then the file "global_settings.json" should contain:
+    Then the file "global_settings.json" in my nexus folder should contain:
       """
       "forceBaseUrl": true
       """
+    And the exit status should be 0
+  
+  Scenario: Update the global settings of Nexus with a string
+    When I update global settings uiTimeout to 61 and upload the json string
+    And I call the nexus "get_global_settings" command
+    Then the file "global_settings.json" in my nexus folder should contain:
+    """
+    "uiTimeout": 61
+    """
     And the exit status should be 0
 
   Scenario: Reset the global settings of Nexus
@@ -95,7 +104,7 @@ Feature: Use the Nexus CLI
       Your Nexus global settings have been reset to their default values
       """
     When I call the nexus "get_global_settings" command
-    Then the file "global_settings.json" should contain:
+    Then the file "global_settings.json" in my nexus folder should contain:
       """
       "forceBaseUrl": false
       """
