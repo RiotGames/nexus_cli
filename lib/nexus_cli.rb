@@ -6,6 +6,7 @@ require 'nexus_cli/nexus_remote_factory'
 require 'nexus_cli/nexus_oss_remote'
 require 'nexus_cli/nexus_pro_remote'
 require 'nexus_cli/configuration'
+require 'nexus_cli/n3_metadata'
 
 module NexusCli
   class << self

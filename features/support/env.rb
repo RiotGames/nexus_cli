@@ -17,8 +17,9 @@ end
 World(ArubaOverrides)
 
 Before do
-  @aruba_timeout_seconds = 5
+  @aruba_timeout_seconds = 10
 end
+
 def get_overrides_string
   @overrides_string ||= "url:http://localhost:8081/nexus repository:releases username:admin password:admin123"
 end

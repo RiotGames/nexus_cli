@@ -31,21 +31,28 @@ module NexusCli
     end
 
     def pull_artifact(artifact, destination)
+      # Using net/http because restclient dies on large files.
       group_id, artifact_id, version, extension = parse_artifact_string(artifact)
-      begin
-        fileData = nexus['service/local/artifact/maven/redirect'].get({:params => {:r => configuration['repository'], :g => group_id, :a => artifact_id, :v => version, :e => extension}})
-      rescue RestClient::ResourceNotFound
-        raise ArtifactNotFoundException
-      end
-      if version.casecmp("latest")
-        doc = Nokogiri::XML(get_artifact_info(artifact))
-        version = doc.xpath("//version").first.content()
-      end
+      uri = URI(File.join(configuration["url"], "service/local/artifact/maven/redirect"))
+      params = {:g => group_id, :a => artifact_id, :v => version, :e => extension, :r => configuration["repository"]}.collect {|k,v| "#{k}=#{URI::escape(v.to_s)}"}.join("&")
+      version = Nokogiri::XML(get_artifact_info(artifact)).xpath("//version").first.content() if version.casecmp("latest")
       destination = File.join(File.expand_path(destination || "."), "#{artifact_id}-#{version}.#{extension}")
-      artifact_file = File.open(destination, 'wb')
-      artifact_file.write(fileData)
-      artifact_file.close()
-      File.expand_path(artifact_file.path)
+      Net::HTTP.start(uri.host, uri.port) do |http|
+        request = Net::HTTP::Get.new(URI(http.request_get(uri.request_uri + "?" + params)["location"]).request_uri)
+        request.basic_auth(configuration["username"], configuration["password"])
+        http.request(request) do |response|
+          case response.code.to_i
+          when 404
+            raise ArtifactNotFoundException
+          end
+          artifact_file = File.open(destination, "wb") do |io|
+            response.read_body do |chunk|
+              io.write(chunk)
+            end
+          end
+        end
+      end
+      File.expand_path(destination)
     end
 
     def push_artifact(artifact, file)

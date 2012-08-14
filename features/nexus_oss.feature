@@ -22,9 +22,9 @@ Feature: Use the Nexus CLI
   Scenario: Pull an artifact
     When I call the nexus "pull com.test:mytest:1.0.0:tgz" command
     Then the output should contain:
-    """
-    Artifact has been retrived and can be found at path:
-    """
+      """
+      Artifact has been retrived and can be found at path:
+      """
     And the exit status should be 0
 
   Scenario: Pull the LATEST of an artifact
@@ -40,18 +40,18 @@ Feature: Use the Nexus CLI
   Scenario: Get an artifact's info
     When I call the nexus "info com.test:mytest:1.0.0:tgz" command
     Then the output should contain:
-    """
-    <groupId>com.test</groupId>
-    """
+      """
+      <groupId>com.test</groupId>
+      """
     And the exit status should be 0
 
   Scenario: Search for artifacts
     When I call the nexus "search_for_artifacts com.test:mytest" command
     Then the output should contain:
-    """
-    Found Versions:
-    1.0.0:    `nexus-cli pull com.test:mytest:1.0.0:tgz`
-    """
+      """
+      Found Versions:
+      1.0.0:    `nexus-cli pull com.test:mytest:1.0.0:tgz`
+      """
     And the exit status should be 0
 
   @delete
@@ -59,17 +59,17 @@ Feature: Use the Nexus CLI
     When I delete an artifact with the GAV of "com.test:mytest:1.0.0:tgz"
     And I call the nexus "info com.test:mytest:1.0.0:tgz" command
     Then the output should contain:
-    """
-    The artifact you requested information for could not be found. Please ensure it exists inside the Nexus.
-    """
+      """
+      The artifact you requested information for could not be found. Please ensure it exists inside the Nexus.
+      """
     And the exit status should be 101
 
   Scenario: Get the current global settings of Nexus
     When I call the nexus "get_global_settings" command
     Then the output should contain:
-    """
-    Your current Nexus global settings have been written to the file: global_settings.json
-    """
+      """
+      Your current Nexus global settings have been written to the file: global_settings.json
+      """
     And a file named "global_settings.json" should exist
     And the exit status should be 0
 
@@ -78,42 +78,43 @@ Feature: Use the Nexus CLI
     And I edit the "global_settings.json" files "forceBaseUrl" field to true
     And I call the nexus "upload_global_settings" command
     Then the output should contain:
-    """
-    Your global_settings.json file has been uploaded to Nexus
-    """
+      """
+      Your global_settings.json file has been uploaded to Nexus
+      """
     When I call the nexus "get_global_settings" command
     Then the file "global_settings.json" should contain:
-    """
-    "forceBaseUrl": true
-    """
+      """
+      "forceBaseUrl": true
+      """
     And the exit status should be 0
 
   Scenario: Reset the global settings of Nexus
     When I call the nexus "reset_global_settings" command
     Then the output should contain:
-    """
-    Your Nexus global settings have been reset to their default values
-    """
+      """
+      Your Nexus global settings have been reset to their default values
+      """
     When I call the nexus "get_global_settings" command
     Then the file "global_settings.json" should contain:
-    """
-    "forceBaseUrl": false
-    """
+      """
+      "forceBaseUrl": false
+      """
     And the exit status should be 0
 
   Scenario: Create a new repository in Nexus
     When I call the nexus "create_repository Artifacts" command
     Then the output should contain:
-    """
-    A new Repository named Artifacts has been created.
-    """
+      """
+      A new Repository named Artifacts has been created.
+      """
     And the exit status should be 0
 
   Scenario: Delete a repository in Nexus
     When I call the nexus "delete_repository Artifacts" command
     And I call the nexus "get_repository_info Artifacts" command
     Then the output should contain:
-    """
-    The repository you requested information could not be found. Please ensure the repository exists.
-    """
+      """
+      The repository you requested information could not be found. Please ensure the repository exists.
+      """
     And the exit status should be 114
+    

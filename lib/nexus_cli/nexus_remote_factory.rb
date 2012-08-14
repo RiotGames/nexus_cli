@@ -32,9 +32,9 @@ module NexusCli
       end
 
       private
-        def running_nexus_pro?
-          return status['edition_long'] == "Professional" ? true : false
-        end
+      def running_nexus_pro?
+        return status['edition_long'] == "Professional" ? true : false
+      end
     end
   end
 end

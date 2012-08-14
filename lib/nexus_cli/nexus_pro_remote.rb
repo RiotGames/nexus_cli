@@ -7,31 +7,50 @@ module NexusCli
   class ProRemote < OSSRemote
 
     def get_artifact_custom_info(artifact)
-      parse_n3(get_artifact_custom_info_n3(artifact))
+      return N3Metadata::n3_to_xml(get_artifact_custom_info_n3(artifact))
     end
 
     def get_artifact_custom_info_n3(artifact)
       group_id, artifact_id, version, extension = parse_artifact_string(artifact)
-      file_name = "#{artifact_id}-#{version}.#{extension}.n3"
-      get_string = "content/repositories/#{configuration['repository']}/.meta/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}/#{file_name}"
+      get_string = N3Metadata::generate_n3_path(group_id, artifact_id, version, extension, configuration['repository'])
       begin
-        nexus[get_string].get
+        n3 = nexus[get_string].get
+        if !n3.match(/<urn:maven#deleted>/).nil?
+          raise ArtifactNotFoundException
+        else
+          return n3
+        end
       rescue RestClient::ResourceNotFound => e
         raise ArtifactNotFoundException
       end
     end
 
-    def update_artifact_custom_info(artifact, file)
+    def update_artifact_custom_info(artifact, *params)
+      group_id, artifact_id, version, extension = parse_artifact_string(artifact)
+      n3_user_urns = { "n3_header" => N3Metadata::generate_n3_header(group_id, artifact_id, version, extension) }.merge(N3Metadata::generate_n3_urns_from_hash(parse_update_params(*params)))
+
+      n3_temp = Tempfile.new("nexus_n3")
+      begin
+        n3_temp.write(N3Metadata::parse_n3_hash(n3_user_urns))
+        n3_temp.close
+        update_artifact_custom_info_n3(artifact, n3_temp.path)
+      ensure
+        n3_temp.close
+        n3_temp.unlink
+      end
+    end
+
+    def update_artifact_custom_info_n3(artifact, file)
       # Check if artifact exists before posting custom metadata.
       get_artifact_info(artifact)
       # Update the custom metadata using the n3 file.
       group_id, artifact_id, version, extension = parse_artifact_string(artifact)
-      file_name = "#{artifact_id}-#{version}.#{extension}.n3"
-      post_string = "content/repositories/#{configuration['repository']}/.meta/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}/#{file_name}"
+      post_string = N3Metadata::generate_n3_path(group_id, artifact_id, version, extension, configuration['repository'])
 
+      # Get all the urn:nexus/user# keys and consolidate.
       # Read in nexus n3 file. If this is a newly-added artifact, there will be no n3 file so escape the exception.
       begin
-        nexus_n3 = get_artifact_custom_info_n3(artifact, overrides)
+        nexus_n3 = get_artifact_custom_info_n3(artifact)
       rescue ArtifactNotFoundException
         nexus_n3 = ""
       end
@@ -39,74 +58,112 @@ module NexusCli
       # Read in local n3 file.
       local_n3 = File.open(file).read
 
-      n3_user_urns = { "head" => "<urn:maven/artifact##{group_id}:#{artifact_id}:#{version}::#{extension}> a <urn:maven#artifact>" }
-      # Get all the urn:nexus/user# keys and consolidate.
-      # First, get the nexus keys.
-      nexus_n3.each_line { |line|
-        if line.match(/urn:nexus\/user#/)
-          tag, value = parse_n3_line(line)
-          n3_user_urns[tag] = "\t<urn:nexus/user##{tag}> \"#{value}\"" unless tag.empty? || value.empty?
-        end
-      }
-      # Next, get the local keys and update the nexus keys.
-      local_n3.each_line { |line|
-        if line.match(/urn:nexus\/user#/)
-          tag, value = parse_n3_line(line)
-          # Delete the nexus key if the local key has no value.
-          if n3_user_urns.has_key?(tag) && value.empty?
-            n3_user_urns.delete(tag)
-          else
-            n3_user_urns[tag] = "\t<urn:nexus/user##{tag}> \"#{value}\"" unless tag.empty? || value.empty?
-          end
-        end
-      }
-
-      n3_data = n3_user_urns.values.join(" ;\n") + " ."
+      n3_user_urns = { "n3_header" => N3Metadata::generate_n3_header(group_id, artifact_id, version, extension) }
+      # Get the nexus keys.
+      n3_user_urns = N3Metadata::generate_n3_urns_from_n3(nexus_n3, n3_user_urns)
+      # Get the local keys and update the nexus keys.
+      n3_user_urns = N3Metadata::generate_n3_urns_from_n3(local_n3, n3_user_urns)
       n3_temp = Tempfile.new("nexus_n3")
       begin
-        n3_temp.write(n3_data)
-        n3_temp.rewind
-        Kernel.quietly {`curl -T #{n3_temp.path} #{File.join(configuration['url'], post_string)} -u #{configuration['username']}:#{configuration['password']}`}
+        n3_temp.write(N3Metadata::parse_n3_hash(n3_user_urns))
+        n3_temp.close
+        nexus[post_string].put({:file => File.new(n3_temp.path)})
       ensure
         n3_temp.close
         n3_temp.unlink
       end
     end
 
-    def search_artifacts(key, type, value)
-      if key.empty? || type.empty? || value.empty?
-        raise SearchParameterMalformedException
-      end
+    def clear_artifact_custom_info(artifact)
+      get_artifact_info(artifact)
+      group_id, artifact_id, version, extension = parse_artifact_string(artifact)
+      post_string = N3Metadata::generate_n3_path(group_id, artifact_id, version, extension, configuration['repository'])
+      n3_user_urns = { "n3_header" => N3Metadata::generate_n3_header(group_id, artifact_id, version, extension) }
+      n3_temp = Tempfile.new("nexus_n3")
       begin
-        nexus['service/local/search/m2/freeform'].get ({params: {p: key, t: type, v: value}}) do |response, request, result, &block|
-          raise BadSearchRequestException if response.code == 400
-          doc = Nokogiri::XML(response.body).xpath("/search-results")
-          return doc.xpath("count")[0].text.to_i > 0 ? doc.to_s : "No search results."
-        end
-      rescue RestClient::ResourceNotFound => e
-        raise ArtifactNotFoundException
+        n3_temp.write(N3Metadata::parse_n3_hash(n3_user_urns))
+        n3_temp.close
+        nexus[post_string].put({:file => File.new(n3_temp.path)})
+      ensure
+        n3_temp.close
+        n3_temp.unlink
       end
+    end
+
+    def search_artifacts(*params)
+      docs = Array.new
+      parse_search_params(*params).each do |param|
+        begin
+          nexus['service/local/search/m2/freeform'].get ({params: {p: param[0], t: param[1], v: param[2]}}) do |response|
+            raise BadSearchRequestException if response.code == 400
+            docs.push(Nokogiri::XML(response.body).xpath("/search-results/data"))
+          end
+        rescue RestClient::ResourceNotFound => e
+          raise ArtifactNotFoundException
+        end
+      end
+      result = docs.inject(docs.first) {|memo,doc| get_common_artifact_set(memo, doc)}
+      return result.nil? ? "" : result.to_xml(:indent => 4)
     end
 
     private
-    def parse_n3(data)
-      builder = Nokogiri::XML::Builder.new do |xml|
-        xml.send("artifact-resolution") {
-          xml.data {
-            data.each_line { |line|
-              tag, value = parse_n3_line(line)
-              xml.send(tag, value) unless tag.empty? || value.empty?
-            }
-          }
-        }
+    def parse_update_params(*params)
+      begin
+        parsed_params = Hash.new
+        params.each do |param|
+          # The first colon separates key and value.
+          c1 = param.index(":")
+          key = param[0..(c1 - 1)]
+          value = param[(c1 + 1)..-1]
+          !c1.nil? && N3Metadata::valid_n3_key?(key) && N3Metadata::valid_n3_value?(value) ? parsed_params[key] = value : raise
+        end
+        return parsed_params
+      rescue
+        raise N3ParameterMalformedException
       end
-      return builder.doc.root.to_s
     end
 
-    def parse_n3_line(line)
-      tag = line.match(/#(\w*)>/) ? "#{$1}" : ""
-      value = line.match(/"([^"]*)"/)  ? "#{$1}" : ""
-      return tag, value
+    def parse_search_params(*params)
+      begin
+        parsed_params = Array.new
+        params.each do |param|
+          # The first two colons separate key, type, and value.
+          c1 = param.index(":")
+          c2 = param.index(":", (c1 + 1))
+          key = param[0..(c1 - 1)]
+          type = param[(c1 + 1)..(c2 - 1)]
+          value = param[(c2 + 1)..-1]
+          !c1.nil? && !c2.nil? && N3Metadata::valid_n3_key?(key) && N3Metadata::valid_n3_value?(value) && N3Metadata::valid_n3_search_type?(type) ? parsed_params.push([key, type, value]) : raise
+        end
+        return parsed_params
+      rescue
+        raise SearchParameterMalformedException
+      end
+    end
+
+    # Expects the XML set with `data` as root.
+    def get_common_artifact_set(set1, set2)
+      intersection = get_artifact_array(set1) & get_artifact_array(set2)
+      return intersection.count > 0 ? Nokogiri::XML("<data>#{intersection.join}</data>").root : Nokogiri::XML("").root
+    end
+
+    # Collect <artifact>...</artifact> elements into an array.
+    # This will allow use of array intersection to find common artifacts in searches.
+    def get_artifact_array(set)
+      artifacts = Array.new
+      artifact = nil
+      set.to_s.split("\n").collect {|x| x.to_s.strip}.each do |piece|
+        if piece == "<artifact>"
+          artifact = piece
+        elsif piece == "</artifact>"
+          artifact += piece
+          artifacts.push(artifact)
+          artifact = nil
+        elsif !artifact.nil?
+          artifact += piece
+        end
+      end
+      return artifacts
     end
   end
 end

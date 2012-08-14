@@ -81,7 +81,7 @@ This could mean several things:
 
   class SearchParameterMalformedException < NexusCliError
     def message
-      "Submit your search request specifying the search key, type, and value. The available search types are `equal`, `matches`, `bounded`, and `notequal`."
+      "Submit your search request specifying one or more 3 colon-separated values: `key:type:value`. The available search types are `equal`, `matches`, `bounded`, and `notequal`."
     end
     status_code(109)
   end
@@ -141,5 +141,12 @@ The output from the server was:
       "The server responded with a #{@code} status code which is unexpected. Please submit a bug."
     end
     status_code(115)
+  end
+
+  class N3ParameterMalformedException < NexusCliError
+    def message
+      "Submit your tag request specifying one or more 2 colon-separated values: `key:value`. The key can only consist of alphanumeric characters."
+    end
+    status_code(116)
   end
 end
