@@ -126,4 +126,39 @@ Feature: Use the Nexus CLI
       The repository you requested information could not be found. Please ensure the repository exists.
       """
     And the exit status should be 114
-    
+
+  Scenario: Create a new user
+    When I call the nexus "create_user --username=cucumber --first_name=John --last_name=Smith --email=jsmith@nexus-cli.com --enabled --roles=nx-admin --password=pass" command
+    And I call the nexus "get_users" command
+    Then the output should contain:
+      """
+      <userId>cucumber</userId>
+      """
+    And the exit status should be 0
+
+  Scenario: Change a users information
+    When I call the nexus "update_user cucumber --first_name=Mike --last_name=Ditka --email= --enabled --roles=" command
+    And I call the nexus "get_users" command
+    Then the output should contain:
+      """
+      <lastName>Ditka</lastName>
+      """
+    And the exit status should be 0
+
+  Scenario: Change a users password
+    When I call the nexus "change_password cucumber --oldPassword=pass --newPassword=foo" command
+    And I call the nexus "get_users" command as the "cucumber" user with password "wrongPassword"
+    Then the output should contain:
+      """
+      Your request was denied by the Nexus server due to a permissions error
+      """
+    And the exit status should be 106
+
+  Scenario: Delete a user
+    When I call the nexus "delete_user cucumber" command
+    And I call the nexus "get_users" command
+    Then the output should not contain:
+      """
+      <userId>cucumber</userId>
+      """
+    And the exit status should be 0

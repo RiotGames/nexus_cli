@@ -7,6 +7,12 @@ When /^I call the nexus "(.*?)" command$/ do |command|
   step "I run `nexus-cli #{command} --overrides=#{get_overrides_string}`"
 end
 
+When /^I call the nexus "(.*?)" command as the "(.*?)" user with password "(.*?)"$/ do |command, username, password|
+  overrides = get_overrides_string.gsub('username:admin', "username:#{username}")
+  overrides.gsub!('password:admin123', "password:#{password}")
+  step "I run `nexus-cli #{command} --overrides=#{overrides}`"
+end
+
 When /^I push an artifact with the GAV of "(.*)"$/ do |gav|
   groupId, artifact_id, version, extension = gav.split(":")
   file = File.new(File.join(temp_dir, "#{artifact_id}-#{version}.#{extension}"), 'w')

@@ -2,6 +2,7 @@ require 'restclient'
 require 'nokogiri'
 require 'yaml'
 require 'json'
+require 'jsonpath'
 
 module NexusCli
   class OSSRemote
@@ -167,42 +168,126 @@ module NexusCli
       end
     end
 
+    def get_users
+      nexus["service/local/users"].get
+    end
+
+    def create_user(params)
+      nexus["service/local/users"].post(create_user_json(params), :content_type => "application/json") do |response|
+        case response.code
+        when 201
+          return true
+        when 400
+          raise CreateUserException.new(response.body)
+        else
+          raise UnexpectedStatusCodeException.new(reponse.code)
+        end
+      end
+    end
+
+    def update_user(params)
+      params[:roles] = [] if params[:roles] == [""]
+      user_json = get_user(params[:userId])
+
+      modified_json = JsonPath.for(user_json)
+      params.each do |key, value|
+        modified_json.gsub!("$..#{key}"){|v| value} unless key == "userId" || value.blank?
+      end
+      
+      nexus["service/local/users/#{params[:userId]}"].put(JSON.dump(modified_json.to_hash), :content_type => "application/json") do |response|
+        case response.code
+        when 200
+          return true
+        when 400
+          raise UpdateUserException.new(response.body)
+        else
+          raise UnexpectedStatusCodeException.new(response.code)
+        end
+      end
+    end
+
+    def get_user(user)
+      nexus["service/local/users/#{user}"].get(:accept => "application/json") do |response|
+        case response.code
+        when 200
+          return JSON.parse(response.body)
+        when 404
+          raise UserNotFoundException.new(user)
+        else
+          raise UnexpectedStatusCodeException.new(response.code)
+        end
+      end
+    end
+
+    def change_password(params)
+      nexus["service/local/users_changepw"].post(create_change_password_json(params), :content_type => "application/json") do |response|
+        case response.code
+        when 202
+          return true
+        when 400
+          raise InvalidCredentialsException
+        end
+      end
+    end
+
+    def delete_user(user_id)
+      nexus["service/local/users/#{user_id}"].delete do |response|
+        case response.code
+        when 204
+          return true
+        when 404
+          raise UserNotFoundException.new(user_id)
+        else
+          raise UnexpectedStatusCodeException.new(response.code)
+        end
+      end
+    end
+
     private
-    def format_search_results(doc, group_id, artifact_id)
-      versions = doc.xpath("//version").inject([]) {|array,node| array << "#{node.content()}"}
-      indent_size = versions.max{|a,b| a.length <=> b.length}.size+4
-      formated_results = ['Found Versions:']
-      versions.inject(formated_results) do |array,version|
-        temp_version = version + ":"
-        array << "#{temp_version.ljust(indent_size)} `nexus-cli pull #{group_id}:#{artifact_id}:#{version}:tgz`"
-      end
-    end
 
-    def parse_artifact_string(artifact)
-      split_artifact = artifact.split(":")
-      if(split_artifact.size < 4)
-        raise ArtifactMalformedException
+      def format_search_results(doc, group_id, artifact_id)
+        versions = doc.xpath("//version").inject([]) {|array,node| array << "#{node.content()}"}
+        indent_size = versions.max{|a,b| a.length <=> b.length}.size+4
+        formated_results = ['Found Versions:']
+        versions.inject(formated_results) do |array,version|
+          temp_version = version + ":"
+          array << "#{temp_version.ljust(indent_size)} `nexus-cli pull #{group_id}:#{artifact_id}:#{version}:tgz`"
+        end
       end
-      group_id, artifact_id, version, extension = split_artifact
-      version.upcase! if version.casecmp("latest")
-      return group_id, artifact_id, version, extension
-    end
 
-    def create_repository_json(name)
-      %{
-        {
-          "data" : {
-            "provider" : "maven2",
-            "providerRole" : "org.sonatype.nexus.proxy.repository.Repository",
-            "exposed" : true,
-            "repoType" : "hosted",
-            "repoPolicy" : "RELEASE",
-            "name" : #{name},
-            "id" : #{name.downcase},
-            "format" : "maven2"
+      def parse_artifact_string(artifact)
+        split_artifact = artifact.split(":")
+        if(split_artifact.size < 4)
+          raise ArtifactMalformedException
+        end
+        group_id, artifact_id, version, extension = split_artifact
+        version.upcase! if version.casecmp("latest")
+        return group_id, artifact_id, version, extension
+      end
+
+      def create_repository_json(name)
+        %{
+          {
+            "data" : {
+              "provider" : "maven2",
+              "providerRole" : "org.sonatype.nexus.proxy.repository.Repository",
+              "exposed" : true,
+              "repoType" : "hosted",
+              "repoPolicy" : "RELEASE",
+              "name" : #{name},
+              "id" : #{name.downcase},
+              "format" : "maven2"
+            }
           }
         }
-      }
-    end
+      end
+
+      def create_user_json(params)
+        JSON.dump(:data => params)
+      end
+
+      def create_change_password_json(params)
+        JSON.dump(:data => params)
+      end
   end
 end

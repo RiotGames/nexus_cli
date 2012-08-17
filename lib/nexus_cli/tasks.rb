@@ -1,4 +1,5 @@
 require 'thor'
+require 'highline'
 
 module NexusCli
   module Tasks
@@ -155,6 +156,169 @@ module NexusCli
         def get_repository_info(name)
           say @nexus_remote.get_repository_info(name), :green
         end
+
+        desc "get_users", "Returns XML representing the users in Nexus."
+        def get_users
+          say @nexus_remote.get_users
+        end
+
+        method_option :username,
+          :type => :string,
+          :default => nil,
+          :desc => "The username."
+        method_option :first_name,
+          :type => :string,
+          :default => nil,
+          :desc => "The first name."
+        method_option :last_name,
+          :type => :string,
+          :default => nil,
+          :desc => "The last name."
+        method_option :email,
+          :type => :string,
+          :default => nil,
+          :desc => "The email."
+        method_option :password,
+          :type => :string,
+          :default => nil,
+          :desc => "The password."
+        method_option :enabled,
+          :type => :boolean,
+          :default => nil,
+          :desc => "Whether this new user is enabled or disabled."
+        method_option :roles,
+          :type => :array,
+          :default => [],
+          :require => false,
+          :desc => "An array of roles."
+        desc "create_user", "Creates a new user"
+        def create_user         
+          params = ask_user(options)
+
+          if @nexus_remote.create_user(params) 
+            say "A user with the ID of #{params[:userId]} has been created.", :blue
+          end
+        end
+
+        method_option :username,
+          :type => :string,
+          :default => nil,
+          :desc => "The username."
+        method_option :first_name,
+          :type => :string,
+          :default => nil,
+          :desc => "The first name."
+        method_option :last_name,
+          :type => :string,
+          :default => nil,
+          :desc => "The last name."
+        method_option :email,
+          :type => :string,
+          :default => nil,
+          :desc => "The email."
+        method_option :enabled,
+          :type => :boolean,
+          :default => nil,
+          :desc => "Whether this new user is enabled or disabled."
+        method_option :roles,
+          :type => :array,
+          :default => [],
+          :require => false,
+          :desc => "An array of roles."
+        desc "update_user user_id", "Updates a user's details. Leave fields blank for them to remain their current values."
+        def update_user(user_id)
+          params = ask_user(options, false, false)
+          params[:userId] = user_id
+
+          if @nexus_remote.update_user(params)
+            say "User #{user_id} has been updated.", :blue
+          end
+        end
+
+        desc "delete_user user_id", "Deletes the user with the given id."
+        def delete_user(user_id)
+          if @nexus_remote.delete_user(user_id)
+            say "User #{user_id} has been deleted.", :blue
+          end
+        end
+
+        method_option :oldPassword,
+          :type => :string,
+          :default => nil,
+          :desc => ""
+        method_option :newPassword,
+          :type => :string,
+          :default => nil,
+          :desc => ""
+        desc "change_password user_id", "Changes the given user's passwords to a new one."
+        def change_password(user_id)
+
+          oldPassword = options[:oldPassword]
+          newPassword = options[:newPassword]
+
+          if oldPassword.nil?
+            oldPassword = ask_password("Please enter your old password:")
+          end
+          if newPassword.nil?
+            newPassword = ask_password("Please enter your new password:")
+          end
+
+          params = {:userId => user_id}
+          params[:oldPassword] = oldPassword
+          params[:newPassword] = newPassword
+          if @nexus_remote.change_password(params)
+            say "The password for user #{user_id} has been updated."
+          end
+        end
+
+        private
+
+          def ask_user(params, ask_username=true, ask_password=true)
+            username = params[:username]
+            first_name = params[:first_name]
+            last_name = params[:last_name]
+            email = params[:email]
+            enabled = params[:enabled]
+            password = params[:password]
+            roles = params[:roles]
+            status = enabled
+            
+            if username.nil? && ask_username
+              username = ask "Please enter the username:" 
+            end
+            if first_name.nil?
+              first_name = ask "Please enter the first name:"
+            end
+            if last_name.nil?
+              last_name = ask "Please enter the last name:"
+            end
+            if email.nil?
+              email = ask "Please enter the email:"
+            end
+            if enabled.nil?
+              status = ask "Is this user enabled for use?", :limited_to => ["true", "false"]
+            end
+            if password.nil? && ask_password
+              password = ask_password("Please enter a password:")
+            end
+            if roles.size == 0 
+              roles = ask "Please enter the roles:"
+            end
+            params = {:userId => username}
+            params[:firstName] = first_name
+            params[:lastName] = last_name
+            params[:email] = email
+            params[:status] = status == true ? "active" : "disabled"
+            params[:password] = password
+            params[:roles] = roles.kind_of?(Array) ? roles : roles.split(' ')
+            params
+          end
+
+          def ask_password(message)
+            HighLine.new.ask(message) do |q| 
+              q.echo = false
+            end
+          end
       end
     end
   end
