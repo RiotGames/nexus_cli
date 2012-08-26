@@ -106,64 +106,222 @@ module NexusCli
       return result.nil? ? "" : result.to_xml(:indent => 4)
     end
 
+    def get_pub_sub(repository_id)
+      nexus["service/local/smartproxy/pub-sub/#{repository_id}"].get
+    end
+
+    def enable_artifact_publish(repository_id)
+      params = {:repositoryId => repository_id}
+      params[:publish] = true
+      artifact_publish(repository_id, params)
+    end
+
+    def disable_artifact_publish(repository_id)
+      params = {:repositoryId => repository_id}
+      params[:publish] = false
+      artifact_publish(repository_id, params)
+    end
+
+    def artifact_publish(repository_id, params)
+      nexus["service/local/smartproxy/pub-sub/#{repository_id}"].put(create_pub_sub_json(params), :content_type => "application/json") do |response|
+        case response.code
+        when 200
+          return true
+        else
+          raise UnexpectedStatusCodeException.new(response.code)
+        end
+      end
+    end
+
+
+    def enable_artifact_subscribe(repository_id)
+      raise NotProxyRepositoryException.new(repository_id) unless Nokogiri::XML(get_repository_info(repository_id)).xpath("/repository/data/repoType").first.content == "proxy"
+
+      params = {:repositoryId => repository_id}
+      params[:subscribe] = true
+      artifact_subscribe(repository_id, params)
+    end
+
+    def disable_artifact_subscribe(repository_id)
+      raise NotProxyRepositoryException.new(repository_id) unless Nokogiri::XML(get_repository_info(repository_id)).xpath("/repository/data/repoType").first.content == "proxy"
+
+      params = {:repositoryId => repository_id}
+      params[:subscribe] = false
+      artifact_subscribe(repository_id, params)
+    end
+
+    def artifact_subscribe(repository_id, params)
+      nexus["service/local/smartproxy/pub-sub/#{repository_id}"].put(create_pub_sub_json(params), :content_type => "application/json") do |response|
+        case response.code
+        when 200
+          return true
+        else
+          raise UnexpectedStatusCodeException.new(response.code)
+        end
+      end
+    end
+
+    def enable_smart_proxy(host=nil, port=nil)
+      params = {:enabled => true}
+      params[:host] = host unless host.nil?
+      params[:port] = port unless port.nil?      
+      smart_proxy(params)
+    end
+
+    def disable_smart_proxy
+      params = {:enabled => false}
+      smart_proxy(params)      
+    end
+
+    def smart_proxy(params)
+      nexus["service/local/smartproxy/settings"].put(create_smart_proxy_settings_json(params), :content_type => "application/json") do |response|
+        case response.code
+        when 200
+          return true
+        else
+          raise UnexpectedStatusCodeException.new(response.code)
+        end
+      end
+    end
+
+    def get_smart_proxy_settings
+      nexus["service/local/smartproxy/settings"].get(:accept => "application/json")
+    end
+
+    def get_smart_proxy_key
+      nexus["service/local/smartproxy/settings"].get(:accept => "application/json")
+    end
+
+    def add_trusted_key(certificate, description, path=true)
+      params = {:description => description}
+      params[:certificate] = path ? File.read(File.expand_path(certificate)) : certificate
+      nexus["service/local/smartproxy/trusted-keys"].post(create_add_trusted_key_json(params), :content_type => "application/json") do |response|
+        case response.code
+        when 201
+          return true
+        else
+          raise UnexpectedStatusCodeException.new(response.code)
+        end
+      end
+    end
+
+    def delete_trusted_key(key_id)
+      nexus["service/local/smartproxy/trusted-keys/#{key_id}"].delete do |response|
+        case response.code
+        when 204
+          return true
+        else 
+          raise UnexpectedStatusCodeException.new(response.code)
+        end
+      end
+    end
+
+    def get_trusted_keys
+      nexus["service/local/smartproxy/trusted-keys"].get(:accept => "application/json")
+    end
+
+    def get_license_info
+      nexus["service/local/licensing"].get(:accept => "application/json")
+    end
+
+    def install_license(license_file)
+      file = File.read(File.expand_path(license_file))
+      nexus["service/local/licensing/upload"].post(file, :content_type => "application/octet-stream") do |response|
+        case response.code
+        when 201
+          return true
+        when 403
+          raise LicenseInstallFailure
+        else
+          raise UnexpectedStatusCodeException.new(response.code)
+        end
+      end
+    end
+
+    def install_license_bytes(bytes)
+      nexus["service/local/licensing/upload"].post(bytes, :content_type => "application/octet-stream") do |response|
+        case response.code
+        when 201
+          return true
+        when 403
+          raise LicenseInstallFailure
+        else
+          raise UnexpectedStatusCodeException.new(response.code)
+        end
+      end
+    end
+
     private
-    def parse_update_params(*params)
-      begin
-        parsed_params = Hash.new
-        params.each do |param|
-          # The first colon separates key and value.
-          c1 = param.index(":")
-          key = param[0..(c1 - 1)]
-          value = param[(c1 + 1)..-1]
-          !c1.nil? && N3Metadata::valid_n3_key?(key) && N3Metadata::valid_n3_value?(value) ? parsed_params[key] = value : raise
-        end
-        return parsed_params
-      rescue
-        raise N3ParameterMalformedException
+
+      def create_add_trusted_key_json(params)
+        JSON.dump(:data => params)
       end
-    end
 
-    def parse_search_params(*params)
-      begin
-        parsed_params = Array.new
-        params.each do |param|
-          # The first two colons separate key, type, and value.
-          c1 = param.index(":")
-          c2 = param.index(":", (c1 + 1))
-          key = param[0..(c1 - 1)]
-          type = param[(c1 + 1)..(c2 - 1)]
-          value = param[(c2 + 1)..-1]
-          !c1.nil? && !c2.nil? && N3Metadata::valid_n3_key?(key) && N3Metadata::valid_n3_value?(value) && N3Metadata::valid_n3_search_type?(type) ? parsed_params.push([key, type, value]) : raise
-        end
-        return parsed_params
-      rescue
-        raise SearchParameterMalformedException
+      def create_smart_proxy_settings_json(params)
+        JSON.dump(:data => params)
       end
-    end
 
-    # Expects the XML set with `data` as root.
-    def get_common_artifact_set(set1, set2)
-      intersection = get_artifact_array(set1) & get_artifact_array(set2)
-      return intersection.count > 0 ? Nokogiri::XML("<data>#{intersection.join}</data>").root : Nokogiri::XML("").root
-    end
-
-    # Collect <artifact>...</artifact> elements into an array.
-    # This will allow use of array intersection to find common artifacts in searches.
-    def get_artifact_array(set)
-      artifacts = Array.new
-      artifact = nil
-      set.to_s.split("\n").collect {|x| x.to_s.strip}.each do |piece|
-        if piece == "<artifact>"
-          artifact = piece
-        elsif piece == "</artifact>"
-          artifact += piece
-          artifacts.push(artifact)
-          artifact = nil
-        elsif !artifact.nil?
-          artifact += piece
+      def create_pub_sub_json(params)
+        JSON.dump(:data => params)
+      end
+    
+      def parse_update_params(*params)
+        begin
+          parsed_params = Hash.new
+          params.each do |param|
+            # The first colon separates key and value.
+            c1 = param.index(":")
+            key = param[0..(c1 - 1)]
+            value = param[(c1 + 1)..-1]
+            !c1.nil? && N3Metadata::valid_n3_key?(key) && N3Metadata::valid_n3_value?(value) ? parsed_params[key] = value : raise
+          end
+          return parsed_params
+        rescue
+          raise N3ParameterMalformedException
         end
       end
-      return artifacts
-    end
+
+      def parse_search_params(*params)
+        begin
+          parsed_params = Array.new
+          params.each do |param|
+            # The first two colons separate key, type, and value.
+            c1 = param.index(":")
+            c2 = param.index(":", (c1 + 1))
+            key = param[0..(c1 - 1)]
+            type = param[(c1 + 1)..(c2 - 1)]
+            value = param[(c2 + 1)..-1]
+            !c1.nil? && !c2.nil? && N3Metadata::valid_n3_key?(key) && N3Metadata::valid_n3_value?(value) && N3Metadata::valid_n3_search_type?(type) ? parsed_params.push([key, type, value]) : raise
+          end
+          return parsed_params
+        rescue
+          raise SearchParameterMalformedException
+        end
+      end
+
+      # Expects the XML set with `data` as root.
+      def get_common_artifact_set(set1, set2)
+        intersection = get_artifact_array(set1) & get_artifact_array(set2)
+        return intersection.count > 0 ? Nokogiri::XML("<data>#{intersection.join}</data>").root : Nokogiri::XML("").root
+      end
+
+      # Collect <artifact>...</artifact> elements into an array.
+      # This will allow use of array intersection to find common artifacts in searches.
+      def get_artifact_array(set)
+        artifacts = Array.new
+        artifact = nil
+        set.to_s.split("\n").collect {|x| x.to_s.strip}.each do |piece|
+          if piece == "<artifact>"
+            artifact = piece
+          elsif piece == "</artifact>"
+            artifact += piece
+            artifacts.push(artifact)
+            artifact = nil
+          elsif !artifact.nil?
+            artifact += piece
+          end
+        end
+        return artifacts
+      end
   end
 end

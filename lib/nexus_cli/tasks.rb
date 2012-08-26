@@ -138,9 +138,15 @@ module NexusCli
           say "Your Nexus global settings have been reset to their default values", :blue
         end
 
+        method_option :proxy,
+          :type => :boolean,
+          :desc => "True if the new repository should be a proxy repository"
+          method_option :url,
+          :type => :string,
+          :desc => "The url of the actual repository for the proxy repository to use."
         desc "create_repository name", "Creates a new Repository with the provided name."
         def create_repository(name)
-          if @nexus_remote.create_repository(name)
+          if @nexus_remote.create_repository(name, options[:proxy], options[:url])
             say "A new Repository named #{name} has been created.", :blue
           end
         end
@@ -159,7 +165,7 @@ module NexusCli
 
         desc "get_users", "Returns XML representing the users in Nexus."
         def get_users
-          say @nexus_remote.get_users
+          say @nexus_remote.get_users, :green
         end
 
         method_option :username,
@@ -267,8 +273,110 @@ module NexusCli
           params[:oldPassword] = oldPassword
           params[:newPassword] = newPassword
           if @nexus_remote.change_password(params)
-            say "The password for user #{user_id} has been updated."
+            say "The password for user #{user_id} has been updated.", :blue
           end
+        end
+
+        desc "get_pub_sub repository_id", "Returns the publish/subscribe status of the given repository."
+        def get_pub_sub(repository_id)
+          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
+          say @nexus_remote.get_pub_sub(repository_id), :green
+        end
+
+        desc "enable_artifact_publish repository_id", "Sets a repository to enable the publishing of updates about its artifacts."
+        def enable_artifact_publish(repository_id)
+          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
+          if @nexus_remote.enable_artifact_publish(repository_id)
+            say "The repository #{repository_id} will now publish updates.", :blue
+          end
+        end
+
+        desc "disable_artifact_publish repository_id", "Sets a repository to disable the publishing of updates about its artifacts."
+        def disable_artifact_publish(repository_id)
+          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
+          if @nexus_remote.disable_artifact_publish(repository_id)
+            say "The repository #{repository_id} is no longer publishing updates.", :blue
+          end
+        end
+
+        desc "enable_artifact_subscribe repository_id", "Sets a repository to subscribe to updates about artifacts."
+        def enable_artifact_subscribe(repository_id)
+          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
+          if @nexus_remote.enable_artifact_subscribe(repository_id)
+            say "The repository #{repository_id} is now subscribed for artifact updates.", :blue
+          end
+        end
+
+        desc "disable_artifact_subscribe repository_id", "Sets a repository to stop subscribing to updates about artifacts."
+        def disable_artifact_subscribe(repository_id)
+          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
+          if @nexus_remote.disable_artifact_subscribe(repository_id)
+            say "The repository #{repository_id} is no longer subscribed for artifact updates.", :blue
+          end
+        end
+
+        method_option :host,
+          :type => :string,
+          :desc => "An IP address for the Nexus server at which publishing will be available."
+        method_option :port,
+          :type => :numeric,
+          :desc => "An available port that will be used for Smart Proxy connections."
+        desc "enable_smart_proxy", "Enables Smart Proxy on the server."
+        def enable_smart_proxy
+          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
+          say @nexus_remote.enable_smart_proxy(options[:host], options[:port])
+        end
+
+        desc "disable_smart_proxy", "Disables Smart Proxy on the server."
+        def disable_smart_proxy
+          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
+          say @nexus_remote.disable_smart_proxy          
+        end
+
+        desc "get_smart_proxy_settings", "Returns the Smart Proxy settings of the server."
+        def get_smart_proxy_settings
+          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
+          say JSON.pretty_generate(JSON.parse(@nexus_remote.get_smart_proxy_settings)), :green
+        end
+
+        method_option :certificate,
+          :type => :string,
+          :required => :true,
+          :desc => "A path to a file containing a certificate."
+        method_option :description,
+          :type => :string,
+          :required => true,
+          :desc => "A description to give to the trusted key. It is probably best to make this meaningful."
+        desc "add_trusted_key", "Adds a new trusted key to the Smart Proxy configuration."
+        def add_trusted_key
+          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
+          if @nexus_remote.add_trusted_key(options[:certificate], options[:description])
+            say "A new trusted key has been added to the nexus.", :blue
+          end
+        end
+
+        desc "delete_trusted_key key_id", "Deletes a trusted key using the given key_id."
+        def delete_trusted_key(key_id)
+          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
+          if @nexus_remote.delete_trusted_key(key_id)
+            say "The trusted key with an id of #{key_id} has been deleted.", :blue
+          end
+        end
+
+        desc "get_trusted_keys", "Returns the trusted keys of the server."
+        def get_trusted_keys
+          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
+          say JSON.pretty_generate(JSON.parse(@nexus_remote.get_trusted_keys)), :green
+        end
+
+        desc "get_license_info", "Returns the license information of the server."
+        def get_license_info
+          say @nexus_remote.get_license_info, :green
+        end
+
+        desc "install_license license_file", "Installs a license file into the server."
+        def install_license(license_file)
+          @nexus_remote.install_license(license_file)
         end
 
         private
