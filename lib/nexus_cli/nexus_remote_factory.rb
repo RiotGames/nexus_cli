@@ -16,7 +16,7 @@ module NexusCli
       end
 
       def nexus
-        @nexus ||= RestClient::Resource.new configuration["url"], :user => configuration["username"], :password => configuration["password"]
+        RestClient::Resource.new configuration["url"], :user => configuration["username"], :password => configuration["password"]
       end
 
       def status

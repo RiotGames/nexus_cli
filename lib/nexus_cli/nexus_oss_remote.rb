@@ -16,7 +16,7 @@ module NexusCli
     end
 
     def nexus
-      @nexus ||= RestClient::Resource.new configuration["url"], :user => configuration["username"], :password => configuration["password"], :timeout => 1000000, :open_timeout => 1000000
+      RestClient::Resource.new configuration["url"], :user => configuration["username"], :password => configuration["password"], :timeout => 1000000, :open_timeout => 1000000
     end
 
     def status

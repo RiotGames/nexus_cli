@@ -94,7 +94,7 @@ module NexusCli
       docs = Array.new
       parse_search_params(*params).each do |param|
         begin
-          nexus['service/local/search/m2/freeform'].get ({params: {p: param[0], t: param[1], v: param[2]}}) do |response|
+          nexus['service/local/search/m2/freeform'].get(:params => {:p => param[0], :t => param[1], :v => param[2]}) do |response|
             raise BadSearchRequestException if response.code == 400
             docs.push(Nokogiri::XML(response.body).xpath("/search-results/data"))
           end
@@ -164,13 +164,13 @@ module NexusCli
     def enable_smart_proxy(host=nil, port=nil)
       params = {:enabled => true}
       params[:host] = host unless host.nil?
-      params[:port] = port unless port.nil?      
+      params[:port] = port unless port.nil?
       smart_proxy(params)
     end
 
     def disable_smart_proxy
       params = {:enabled => false}
-      smart_proxy(params)      
+      smart_proxy(params)
     end
 
     def smart_proxy(params)
@@ -210,7 +210,7 @@ module NexusCli
         case response.code
         when 204
           return true
-        else 
+        else
           raise UnexpectedStatusCodeException.new(response.code)
         end
       end
@@ -264,7 +264,7 @@ module NexusCli
       def create_pub_sub_json(params)
         JSON.dump(:data => params)
       end
-    
+
       def parse_update_params(*params)
         begin
           parsed_params = Hash.new
