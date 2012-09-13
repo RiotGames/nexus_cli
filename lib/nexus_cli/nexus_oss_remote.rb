@@ -6,7 +6,6 @@ require 'jsonpath'
 
 module NexusCli
   class OSSRemote
-
     def initialize(overrides)
       @configuration = Configuration::parse(overrides)
     end
@@ -75,8 +74,7 @@ module NexusCli
 
     def delete_artifact(artifact)
       group_id, artifact_id, version = parse_artifact_string(artifact)
-      delete_string = "content/repositories/releases/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}"
-      Kernel.quietly {`curl --request DELETE #{File.join(configuration['url'], delete_string)} -u #{configuration['username']}:#{configuration['password']}`}
+      nexus["content/repositories/#{configuration['repository']}/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}"].delete
     end
 
     def get_artifact_info(artifact)
@@ -134,10 +132,10 @@ module NexusCli
 
     def create_repository(name, proxy, url)
       json = if proxy
-          create_proxy_repository_json(name, url)
-        else
-          create_hosted_repository_json(name)
-        end
+        create_proxy_repository_json(name, url)
+      else
+        create_hosted_repository_json(name)
+      end
       nexus['service/local/repositories'].post(json, :content_type => "application/json") do |response|
         case response.code
         when 400
@@ -198,7 +196,7 @@ module NexusCli
       params.each do |key, value|
         modified_json.gsub!("$..#{key}"){|v| value} unless key == "userId" || value.blank?
       end
-      
+
       nexus["service/local/users/#{params[:userId]}"].put(JSON.dump(modified_json.to_hash), :content_type => "application/json") do |response|
         case response.code
         when 200
@@ -254,60 +252,60 @@ module NexusCli
 
     private
 
-      def format_search_results(doc, group_id, artifact_id)
-        versions = doc.xpath("//version").inject([]) {|array,node| array << "#{node.content()}"}
-        indent_size = versions.max{|a,b| a.length <=> b.length}.size+4
-        formated_results = ['Found Versions:']
-        versions.inject(formated_results) do |array,version|
-          temp_version = version + ":"
-          array << "#{temp_version.ljust(indent_size)} `nexus-cli pull #{group_id}:#{artifact_id}:#{version}:tgz`"
-        end
+    def format_search_results(doc, group_id, artifact_id)
+      versions = doc.xpath("//version").inject([]) {|array,node| array << "#{node.content()}"}
+      indent_size = versions.max{|a,b| a.length <=> b.length}.size+4
+      formated_results = ['Found Versions:']
+      versions.inject(formated_results) do |array,version|
+        temp_version = version + ":"
+        array << "#{temp_version.ljust(indent_size)} `nexus-cli pull #{group_id}:#{artifact_id}:#{version}:tgz`"
       end
+    end
 
-      def parse_artifact_string(artifact)
-        split_artifact = artifact.split(":")
-        if(split_artifact.size < 4)
-          raise ArtifactMalformedException
-        end
-        group_id, artifact_id, version, extension = split_artifact
-        version.upcase! if version.casecmp("latest")
-        return group_id, artifact_id, version, extension
+    def parse_artifact_string(artifact)
+      split_artifact = artifact.split(":")
+      if(split_artifact.size < 4)
+        raise ArtifactMalformedException
       end
+      group_id, artifact_id, version, extension = split_artifact
+      version.upcase! if version.casecmp("latest")
+      return group_id, artifact_id, version, extension
+    end
 
-      def create_hosted_repository_json(name)
-        params = {:provider => "maven2"}
-        params[:providerRole] = "org.sonatype.nexus.proxy.repository.Repository" 
-        params[:exposed] = true
-        params[:repoType] = "hosted"
-        params[:repoPolicy] = "RELEASE"
-        params[:name] = name
-        params[:id] = name.gsub(" ", "_").downcase
-        params[:format] = "maven2"
-        JSON.dump(:data => params)
-      end
+    def create_hosted_repository_json(name)
+      params = {:provider => "maven2"}
+      params[:providerRole] = "org.sonatype.nexus.proxy.repository.Repository"
+      params[:exposed] = true
+      params[:repoType] = "hosted"
+      params[:repoPolicy] = "RELEASE"
+      params[:name] = name
+      params[:id] = name.gsub(" ", "_").downcase
+      params[:format] = "maven2"
+      JSON.dump(:data => params)
+    end
 
-      def create_proxy_repository_json(name, url)
-        params = {:provider => "maven2"}
-        params[:providerRole] = "org.sonatype.nexus.proxy.repository.Repository" 
-        params[:exposed] = true
-        params[:repoType] = "proxy"
-        params[:repoPolicy] = "RELEASE"
-        params[:checksumPolicy] = "WARN"
-        params[:writePolicy] = "READ_ONLY"
-        params[:downloadRemoteIndexes] = true
-        params[:autoBlockActive] = true
-        params[:name] = name
-        params[:id] = name.gsub(" ", "_").downcase
-        params[:remoteStorage] = {:remoteStorageUrl => url.nil? ? "http://change-me.com/" : url}
-        JSON.dump(:data => params)
-      end
+    def create_proxy_repository_json(name, url)
+      params = {:provider => "maven2"}
+      params[:providerRole] = "org.sonatype.nexus.proxy.repository.Repository"
+      params[:exposed] = true
+      params[:repoType] = "proxy"
+      params[:repoPolicy] = "RELEASE"
+      params[:checksumPolicy] = "WARN"
+      params[:writePolicy] = "READ_ONLY"
+      params[:downloadRemoteIndexes] = true
+      params[:autoBlockActive] = true
+      params[:name] = name
+      params[:id] = name.gsub(" ", "_").downcase
+      params[:remoteStorage] = {:remoteStorageUrl => url.nil? ? "http://change-me.com/" : url}
+      JSON.dump(:data => params)
+    end
 
-      def create_user_json(params)
-        JSON.dump(:data => params)
-      end
+    def create_user_json(params)
+      JSON.dump(:data => params)
+    end
 
-      def create_change_password_json(params)
-        JSON.dump(:data => params)
-      end
+    def create_change_password_json(params)
+      JSON.dump(:data => params)
+    end
   end
 end

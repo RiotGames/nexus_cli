@@ -172,7 +172,7 @@ The output from the server was:
     end
     status_code(118)
   end
-  
+
   class UpdateUserException < NexusCliError
     def initialize(body)
       @server_response = JSON.pretty_generate(JSON.parse(body))
@@ -208,5 +208,12 @@ The output from the server was:
       "Either your Nexus already has a license installed or there was a problem with the file you uploaded."
     end
     status_code(122)
+  end
+
+  class N3NotFoundException < NexusCliError
+    def message
+      "The artifact does not have any custom metadata added yet."
+    end
+    status_code(123)
   end
 end
