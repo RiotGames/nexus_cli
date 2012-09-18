@@ -27,4 +27,8 @@ describe NexusCli do
          to_return(:status => 404, :body => "", :headers => {})
     expect {remote.update_user(:userId => "qwertyasdf")}.to raise_error(NexusCli::UserNotFoundException)
   end
+
+  it "gives you an error when you try to set the logging level to something weird" do
+    expect {remote.set_logger_level("weird")}.to raise_error(NexusCli::InvalidLoggingLevelException)
+  end
 end

@@ -162,3 +162,28 @@ Feature: Use the Nexus CLI
       <userId>cucumber</userId>
       """
     And the exit status should be 0
+
+  Scenario: Get Logging Info
+    When I call the nexus "get_logging_info" command
+    Then the output should contain:
+      """
+      \"rootLoggerLevel\":\"INFO\"
+      """
+    And the exit status should be 0
+
+  Scenario: Change the logging level to DEBUG
+    When I call the nexus "set_logger_level debug" command
+    And I call the nexus "get_logging_info" command
+    Then the output should contain:
+      """
+      \"rootLoggerLevel\":\"DEBUG\"
+      """
+    And the exit status should be 0
+
+  Scenario: Change the logging level back to INFO
+    When I call the nexus "set_logger_level info" command
+    Then the output should contain:
+      """
+      The logging level of Nexus has been set to INFO
+      """
+    And the exit status should be 0

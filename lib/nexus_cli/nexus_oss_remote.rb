@@ -252,6 +252,22 @@ module NexusCli
       status['edition_long'] == "Professional"
     end
 
+    def get_logging_info
+      nexus["service/local/log/config"].get(:accept => "application/json")
+    end
+
+    def set_logger_level(level)
+      raise InvalidLoggingLevelException unless ["INFO", "DEBUG", "ERROR"].include?(level.upcase)
+      nexus["service/local/log/config"].put(create_logger_level_json(level), :content_type => "application/json") do |response|
+        case response.code
+        when 200
+          return true
+        else
+          raise UnexpectedStatusCodeException.new(response.code)          
+        end
+      end
+    end
+
     private
 
       def format_search_results(doc, group_id, artifact_id)
@@ -307,6 +323,11 @@ module NexusCli
       end
 
       def create_change_password_json(params)
+        JSON.dump(:data => params)
+      end
+
+      def create_logger_level_json(level)
+        params = {:rootLoggerLevel => level.upcase}
         JSON.dump(:data => params)
       end
   end

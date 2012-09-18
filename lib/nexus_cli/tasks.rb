@@ -379,6 +379,18 @@ module NexusCli
           @nexus_remote.install_license(license_file)
         end
 
+        desc "get_logging_info", "Gets the log4j Settings of the Nexus server."
+        def get_logging_info
+          say @nexus_remote.get_logging_info, :green
+        end
+
+        desc "set_logger_level level", "Updates the log4j logging level to a new value."
+        def set_logger_level(level)
+          if @nexus_remote.set_logger_level(level)
+            say "The logging level of Nexus has been set to #{level.upcase}", :blue
+          end
+        end
+
         private
 
           def ask_user(params, ask_username=true, ask_password=true)
