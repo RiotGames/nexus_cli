@@ -7,8 +7,4 @@ begin
 rescue NexusCli::NexusCliError => e
   NexusCli.ui.say e.message, :red
   exit e.status_code
-rescue RestClient::Unauthorized => e
-  e = NexusCli::PermissionsException.new
-  NexusCli.ui.say e.message, :red
-  exit e.status_code
 end

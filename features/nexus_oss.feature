@@ -19,6 +19,7 @@ Feature: Use the Nexus CLI
       """
     And the exit status should be 0
   
+  @pull
   Scenario: Pull an artifact
     When I call the nexus "pull com.test:mytest:1.0.0:tgz" command
     Then the output should contain:

@@ -9,6 +9,10 @@ require 'nexus_cli/configuration'
 require 'nexus_cli/n3_metadata'
 
 module NexusCli
+
+  DEFAULT_ACCEPT_HEADER = {"Accept" => "application/json"}
+  DEFAULT_CONTENT_TYPE_HEADER = {"Content-Type" => "application/json"}
+
   class << self
     def root
       @root ||= Pathname.new(File.expand_path('../', File.dirname(__FILE__)))

@@ -172,7 +172,7 @@ The output from the server was:
     end
     status_code(118)
   end
-  
+
   class UpdateUserException < NexusCliError
     def initialize(body)
       @server_response = JSON.pretty_generate(JSON.parse(body))
@@ -215,5 +215,12 @@ The output from the server was:
       "Logging level must be set to one of either INFO, DEBUG, or ERROR."
     end
     status_code(123)
+  end
+
+  class N3NotFoundException < NexusCliError
+    def message
+      "The artifact does not have any custom metadata added yet."
+    end
+    status_code(124)
   end
 end
