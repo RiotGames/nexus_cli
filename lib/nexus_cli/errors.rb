@@ -223,4 +223,11 @@ The output from the server was:
     end
     status_code(124)
   end
+
+  class SSLException < NexusCliError
+    def message
+      "You are attempting to communicate securely with a server that has an untrusted certificate. Please ensure your certificate is correct or set ssl_verify to false."
+    end
+    status_code(125)
+  end
 end

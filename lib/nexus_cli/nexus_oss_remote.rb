@@ -6,8 +6,9 @@ require 'jsonpath'
 
 module NexusCli
   class OSSRemote
-    def initialize(overrides)
+    def initialize(overrides, ssl_verify=true)
       @configuration = Configuration::parse(overrides)
+      @ssl_verify = ssl_verify
     end
 
     def configuration
@@ -21,6 +22,7 @@ module NexusCli
       # https://github.com/nahi/httpclient/issues/63
       client.set_auth(nil, configuration['username'], configuration['password'])
       client.www_auth.basic_auth.challenge(configuration['url'])
+      client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE unless @ssl_verify
       return client
     end
 

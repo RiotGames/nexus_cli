@@ -5,9 +5,10 @@ require 'yaml'
 module NexusCli
   class Factory
     class << self
-      def create(overrides)
+      def create(overrides, ssl_verify)
         @configuration = Configuration::parse(overrides)
-        running_nexus_pro? ? ProRemote.new(overrides) : OSSRemote.new(overrides)
+        @ssl_verify = ssl_verify
+        running_nexus_pro? ? ProRemote.new(overrides, ssl_verify) : OSSRemote.new(overrides, ssl_verify)
       end
 
       def configuration
@@ -19,6 +20,7 @@ module NexusCli
         # https://github.com/nahi/httpclient/issues/63
         client.set_auth(nil, configuration['username'], configuration['password'])
         client.www_auth.basic_auth.challenge(configuration['url'])
+        client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE unless @ssl_verify
         return client
       end
 
@@ -27,7 +29,12 @@ module NexusCli
       end
 
       def status
-        response = nexus.get(nexus_url("service/local/status"))
+        begin
+          response = nexus.get(nexus_url("service/local/status"))
+        rescue OpenSSL::SSL::SSLError => e
+          raise SSLException
+        end
+
         case response.status
         when 200
           doc = Nokogiri::XML(response.content).xpath("/status/data")

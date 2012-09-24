@@ -21,10 +21,15 @@ module NexusCli
           :default => {},
           :desc => "A hashed list of overrides. Available options are 'url', 'repository', 'username', and 'password'."
 
+        class_option :ssl_verify,
+          :type => :boolean,
+          :default => true,
+          :desc => "Set to false to disable SSL Verification."
+
         def initialize(*args)
           super
           begin
-            @nexus_remote = Factory.create(options[:overrides])
+            @nexus_remote = Factory.create(options[:overrides], options[:ssl_verify])
           rescue NexusCliError => e
             say e.message, :red
             exit e.status_code
