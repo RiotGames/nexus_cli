@@ -124,7 +124,7 @@ Feature: Use the Nexus CLI
     And I call the nexus "get_repository_info Artifacts" command
     Then the output should contain:
       """
-      The repository you requested information could not be found. Please ensure the repository exists.
+      The repository you provided could not be found. Please ensure the repository exists.
       """
     And the exit status should be 114
 
@@ -188,3 +188,45 @@ Feature: Use the Nexus CLI
       The logging level of Nexus has been set to INFO
       """
     And the exit status should be 0
+
+  Scenario: Create a Nexus Group Repository
+    When I call the nexus "create_group_repository cucumber_group" command
+    Then the output should contain:
+      """
+      A new group repository named cucumber_group has been created.
+      """
+    And the exit status should be 0
+
+  Scenario: Get information about a Nexus Group Repository
+    When I call the nexus "get_group_repository cucumber_group" command
+    Then the output should contain:
+      """
+      \"id\":\"cucumber_group\"
+      """
+    And the exit status should be 0
+
+  Scenario: Add a repository to the Nexus Group Repository
+    When I call the nexus "add_to_group_repository cucumber_group releases" command
+    Then the output should contain:
+      """
+      The repository releases has been added to the repository group cucumber_group
+      """
+    And the exit status should be 0
+
+  Scenario: Remove a repository from a Nexus Group Repository
+    When I call the nexus "remove_from_group_repository cucumber_group releases" command
+    And I call the nexus "get_group_repository cucumber_group" command
+    Then the output should not contain:
+     """
+     \"id\"=>\"releases\"
+     """
+    And the exit status should be 0
+
+  Scenario: Delete a Nexus Group Repository
+    When I call the nexus "delete_group_repository cucumber_group" command
+    And I call the nexus "get_group_repository cucumber_group" command
+    Then the output should not contain:
+      """
+      \"id\":\"cucumber_group\"
+      """
+    And the exit status should be 114

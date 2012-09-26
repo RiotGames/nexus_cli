@@ -5,7 +5,7 @@ require 'yaml'
 module NexusCli
   class Factory
     class << self
-      def create(overrides, ssl_verify)
+      def create(overrides, ssl_verify=false)
         @configuration = Configuration::parse(overrides)
         @ssl_verify = ssl_verify
         running_nexus_pro? ? ProRemote.new(overrides, ssl_verify) : OSSRemote.new(overrides, ssl_verify)

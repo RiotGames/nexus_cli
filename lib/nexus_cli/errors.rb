@@ -127,7 +127,7 @@ The output from the server was:
 
   class RepositoryNotFoundException < NexusCliError
     def message
-      "The repository you requested information could not be found. Please ensure the repository exists."
+      "The repository you provided could not be found. Please ensure the repository exists."
     end
     status_code(114)
   end

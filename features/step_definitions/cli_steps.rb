@@ -70,14 +70,14 @@ P5KVneepzhtEt9G/uO4MU89cdUR0IMyUwdhq2dg=
 -----END CERTIFICATE-----
 ")
     end
-    step "I run `nexus-cli add_trusted_key --certificate=#{File.join(temp_dir, "cert.txt")} --description=cucumber`"
+    step "I run `nexus-cli add_trusted_key --certificate=#{File.join(temp_dir, "cert.txt")} --description=cucumber --overrides=#{get_overrides_string}`"
   end
 end
 
 When /^I delete a trusted key in nexus$/ do
   json = JSON.parse(nexus_remote.get_trusted_keys)
   key_id = json["data"].first["id"]
-  step "I run `nexus-cli delete_trusted_key #{key_id}`"
+  step "I run `nexus-cli delete_trusted_key #{key_id} --overrides=#{get_overrides_string}`"
 end
 
 Then /^a file named "(.*?)" should exist in my nexus folder$/ do |file|

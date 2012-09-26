@@ -330,6 +330,62 @@ module NexusCli
       end
     end
 
+    def create_group_repository(name)
+      response = nexus.post(nexus_url("service/local/repo_groups"), :body => create_group_repository_json(name), :header => DEFAULT_CONTENT_TYPE_HEADER)
+      case response.status
+      when 201
+        return true
+      else
+        raise UnexpectedStatusCodeException.new(response.status)
+      end
+    end
+
+    def get_group_repository(group_id)
+      response = nexus.get(nexus_url("service/local/repo_groups/#{group_id}"), :header => DEFAULT_ACCEPT_HEADER)
+      case response.status
+      when 200
+        return response.content
+      when 404
+        raise RepositoryNotFoundException
+      else
+        raise UnexpectedStatusCodeException.new(response.status)
+      end
+    end
+
+    def add_to_group_repository(group_id, repository_to_add_id)
+      response = nexus.put(nexus_url("service/local/repo_groups/#{group_id}"), :body => create_add_to_group_repository_json(group_id, repository_to_add_id), :header => DEFAULT_CONTENT_TYPE_HEADER)
+      case response.status
+      when 200
+        return true
+      when 400
+        raise RepositoryNotFoundException
+      else
+        raise UnexpectedStatusCodeException.new(response.status)
+      end
+    end
+
+    def remove_from_group_repository(group_id, repository_to_remove_id)
+      response = nexus.put(nexus_url("service/local/repo_groups/#{group_id}"), :body => create_remove_from_group_repository_json(group_id, repository_to_remove_id), :header => DEFAULT_CONTENT_TYPE_HEADER)
+      case response.status
+      when 200
+        return true
+      else
+        raise UnexpectedStatusCodeException.new(response.status)
+      end
+    end
+
+    def delete_group_repository(group_id)
+      response = nexus.delete(nexus_url("service/local/repo_groups/#{group_id}"))
+      case response.status
+      when 204
+        return true
+      when 404
+        raise RepositoryNotFoundException
+      else
+        raise UnexpectedStatusCodeException.new(response.status)
+      end
+    end
+
     private
 
     def format_search_results(doc, group_id, artifact_id)
@@ -390,6 +446,38 @@ module NexusCli
 
     def create_logger_level_json(level)
       params = {:rootLoggerLevel => level.upcase}
+      JSON.dump(:data => params)
+    end
+
+    def create_group_repository_json(name)
+      params = {:id => name.gsub(" ", "_").downcase}
+      params[:name] = name
+      params[:provider] = "maven2"
+      params[:exposed] = true
+      JSON.dump(:data => params)
+    end
+
+    def create_add_to_group_repository_json(group_id, repository_to_add_id)
+      group_repository_json = get_group_repository(group_id)
+      repositories = JSON.parse(group_repository_json)["data"]["repositories"]
+      repositories << {:id => repository_to_add_id}
+      params = {:repositories => repositories}
+      params[:id] = group_id
+      JSON.dump(:data => params)
+    end
+
+    def create_remove_from_group_repository_json(group_id, repository_to_remove_id)
+      group_repository_json = get_group_repository(group_id)
+      repositories = JSON.parse(group_repository_json)["data"]["repositories"]
+      
+      entry_to_remove = repositories.find{|repository| repository["id"] == repository_to_remove_id}
+      if entry_to_remove.nil?
+        raise RepositoryNotFoundException
+      else
+        repositories.delete(entry_to_remove)
+      end
+      params = {:repositories => repositories}
+      params[:id] = group_id
       JSON.dump(:data => params)
     end
   end

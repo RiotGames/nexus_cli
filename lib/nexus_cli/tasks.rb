@@ -383,6 +383,39 @@ module NexusCli
           end
         end
 
+        desc "create_group_repository name", "Creates a new repository group with the given name."
+        def create_group_repository(name)
+          if @nexus_remote.create_group_repository(name)
+            say "A new group repository named #{name} has been created.", :blue
+          end
+        end
+
+        desc "get_group_repository group_id", "Gets information about the given group repository."
+        def get_group_repository(group_id)
+          say @nexus_remote.get_group_repository(group_id), :green
+        end
+
+        desc "add_to_group_repository group_id repository_to_add_id", "Adds a repository with the given id into the group repository."
+        def add_to_group_repository(group_id, repository_to_add_id)
+          if @nexus_remote.add_to_group_repository(group_id, repository_to_add_id)
+            say "The repository #{repository_to_add_id} has been added to the repository group #{group_id}", :blue
+          end
+        end
+
+        desc "remove_from_group_repository group_id repository_to_remove_id", "Remove a repository with the given id from the group repository."
+        def remove_from_group_repository(group_id, repository_to_remove_id)
+          if @nexus_remote.remove_from_group_repository(group_id, repository_to_remove_id)
+            say "The repository with an id of #{repository_to_remove_id} has been removed from the group repository, #{group_id}.", :blue
+          end
+        end
+
+        desc "delete_group_repository group_id","Deletes a group repository based on the given id."
+        def delete_group_repository(group_id)
+          if @nexus_remote.delete_group_repository(group_id)
+            say "The group repository, #{group_id} has been deleted.", :blue
+          end
+        end
+
         private
 
           def ask_user(params, ask_username=true, ask_password=true)
