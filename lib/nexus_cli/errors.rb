@@ -244,5 +244,16 @@ The output from the server was:
     end
     status_code(127)
   end
+  
+  class NexusHTTP404 < NexusCliError
+    def initialize(body)
+      @server_response = body
+    end
 
+    def message
+      %{Your command failed and the server returned an error code. The output of the response was:
+#{@server_response}}
+    end
+    status_code(128)
+  end
 end

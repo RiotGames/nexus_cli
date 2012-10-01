@@ -11,6 +11,7 @@ module NexusCli
         end
         overrides.each{|key, value| config[key] = value} unless overrides.nil? || overrides.empty?
         validate_config(config)
+        config["repository"] = config["repository"].gsub(" ", "_").downcase
         config
       end
 

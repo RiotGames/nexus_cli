@@ -28,6 +28,20 @@ def get_overrides
   @overrides ||= {'url' => 'http://localhost:8081/nexus', 'repository' => 'releases', 'username' => 'admin', 'password' => 'admin123'}
 end
 
+def create_step_overrides(overrides)
+  overrides_hash = overrides.split(" ").inject({}) do |overrides_hash, override|
+    key, value = override.split(":")
+    overrides_hash[key] = value
+    overrides_hash
+  end
+
+  step_overrides = get_overrides.merge(overrides_hash)
+  step_overrides.to_a.inject("") do |overrides_string, pair|
+    overrides_string << pair.join(":")
+    overrides_string << " "
+  end
+end
+
 def temp_dir
   @tmpdir ||= Dir.mktmpdir
 end

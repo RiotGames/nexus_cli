@@ -38,24 +38,9 @@ module NexusCli
     # @result [Integer] The resulting exit code of the operation
     def update_artifact_custom_info(artifact, *params)
       target_n3 = parse_custom_metadata_update_params(*params)
+      nexus_n3 = get_custom_metadata_hash(artifact)
 
-      # Get all the urn:nexus/user# keys and consolidate.
-      # Read in nexus n3 file. If this is a newly-added artifact, there will be no n3 file so escape the exception.
-      begin
-        nexus_n3 = N3Metadata::convert_result_to_hash(get_artifact_custom_info_raw(artifact))
-      rescue N3NotFoundException
-        nexus_n3 = {}
-      end
-
-      group_id, artifact_id, version, extension = parse_artifact_string(artifact)
-      encoded_string = N3Metadata::create_base64_subject(group_id, artifact_id, version, extension)
-      response = nexus.post(nexus_url("service/local/index/custom_metadata/#{configuration['repository']}/#{encoded_string}"), :body => create_custom_metadata_update_json(nexus_n3, target_n3), :header => DEFAULT_CONTENT_TYPE_HEADER)
-      case response.code
-      when 201
-        return true
-      else
-        raise UnexpectedStatusCodeException.new(response.status)
-      end
+      do_update_custom_metadata(artifact, nexus_n3, target_n3)
     end
 
     # Clears all custom metadata from an artifact
@@ -264,7 +249,39 @@ module NexusCli
       end
     end
 
+    def transfer_artifact(artifact, from_repository, to_repository)
+      do_transfer_artifact(artifact, from_repository, to_repository)
+      
+      configuration["repository"] = from_repository
+      from_artifact_metadata = get_custom_metadata_hash(artifact)
+
+      configuration["repository"] = to_repository
+      to_artifact_metadata = get_custom_metadata_hash(artifact)
+
+      do_update_custom_metadata(artifact, from_artifact_metadata, to_artifact_metadata)
+    end
+
     private
+
+    def get_custom_metadata_hash(artifact)
+      begin
+        N3Metadata::convert_result_to_hash(get_artifact_custom_info_raw(artifact))
+      rescue N3NotFoundException
+        Hash.new
+      end
+    end
+
+    def do_update_custom_metadata(artifact, source_metadata, target_metadata)
+      group_id, artifact_id, version, extension = parse_artifact_string(artifact)
+      encoded_string = N3Metadata::create_base64_subject(group_id, artifact_id, version, extension)
+      response = nexus.post(nexus_url("service/local/index/custom_metadata/#{configuration['repository']}/#{encoded_string}"), :body => create_custom_metadata_update_json(source_metadata, target_metadata), :header => DEFAULT_CONTENT_TYPE_HEADER)
+      case response.code
+      when 201
+        return true
+      else
+        raise UnexpectedStatusCodeException.new(response.status)
+      end
+    end
 
     def create_add_trusted_key_json(params)
       JSON.dump(:data => params)

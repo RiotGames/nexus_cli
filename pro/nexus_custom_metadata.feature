@@ -1,7 +1,7 @@
 Feature: Use the Nexus Pro CLI
 	As a Pro CLI user
 	I need commands to get, update, search, and delete Nexus artifact custom metadata
-		
+
   Scenario: Push an artifact
     When I push an artifact with the GAV of "com.test:myprotest:1.0.0:tgz"
     Then the output should contain:
@@ -10,7 +10,7 @@ Feature: Use the Nexus Pro CLI
 	    """
     And the exit status should be 0
 
-	Scenario: Update an artifact's custom metadata
+  Scenario: Update an artifact's custom metadata
 		When I call the nexus "update_artifact_custom_info com.test:myprotest:1.0.0:tgz somekey:somevalue" command
 		Then the output should contain:
 			"""
@@ -78,6 +78,15 @@ Feature: Use the Nexus Pro CLI
 			"""
 		And the exit status should be 0
 
+  Scenario: Transfer an artifact and ensure its metadata is also copied
+    When I call the nexus "transfer com.test:myprotest:1.0.0:tgz releases thirdparty" command
+    And I call the nexus "custom com.test:myprotest:1.0.0:tgz" command overriding "repository:thirdparty"
+    Then the output should contain:
+      """
+      <somekey>somevalue_1!</somekey>
+      """
+    And the exit status should be 0
+
 	Scenario: Clear an artifact's custom metadata
 		When I call the nexus "clear_artifact_custom_info com.test:myprotest:1.0.0:tgz" command
 		Then the output should contain:
@@ -90,6 +99,16 @@ Feature: Use the Nexus Pro CLI
   Scenario: Attempt to delete an artifact
     When I delete an artifact with the GAV of "com.test:myprotest:1.0.0:tgz"
     And I call the nexus "info com.test:myprotest:1.0.0:tgz" command
+    Then the output should contain:
+	    """
+	    The artifact you requested information for could not be found. Please ensure it exists inside the Nexus.
+	    """
+    And the exit status should be 101
+
+  @delete
+  Scenario: Attempt to delete another artifact
+    When I delete an artifact with the GAV of "com.test:myprotest:1.0.0:tgz" from the "thirdparty" repository
+    And I call the nexus "info com.test:myprotest:1.0.0:tgz" command overriding "repository:thirdparty"
     Then the output should contain:
 	    """
 	    The artifact you requested information for could not be found. Please ensure it exists inside the Nexus.

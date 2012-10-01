@@ -15,6 +15,7 @@ module NexusCli
         map 'status'        => :get_nexus_status
         map 'search'        => :search_for_artifacts
         map 'search_custom' => :search_artifacts_custom
+        map 'transfer'      => :transfer_artifact
 
         class_option :overrides,
           :type => :hash,
@@ -26,71 +27,61 @@ module NexusCli
           :default => true,
           :desc => "Set to false to disable SSL Verification."
 
-        def initialize(*args)
-          super
-          begin
-            @nexus_remote = Factory.create(options[:overrides], options[:ssl_verify])
-          rescue NexusCliError => e
-            say e.message, :red
-            exit e.status_code
-          end
-        end
-
         method_option :destination,
           :type => :string,
           :default => nil,
           :desc => "A different folder other than the current working directory."
         desc "pull_artifact artifact", "Pulls an artifact from Nexus and places it on your machine."
         def pull_artifact(artifact)
-          path_to_artifact = @nexus_remote.pull_artifact(artifact, options[:destination])
+          path_to_artifact = nexus_remote.pull_artifact(artifact, options[:destination])
           say "Artifact has been retrived and can be found at path: #{path_to_artifact}", :green
         end
 
         desc "push_artifact artifact file", "Pushes an artifact from your machine onto the Nexus."
         def push_artifact(artifact, file)
-          @nexus_remote.push_artifact(artifact, file)
+          nexus_remote.push_artifact(artifact, file)
           say "Artifact #{artifact} has been successfully pushed to Nexus.", :green
         end
 
         desc "get_artifact_info artifact", "Gets and returns the metadata in XML format about a particular artifact."
         def get_artifact_info(artifact)
-          say @nexus_remote.get_artifact_info(artifact), :green
+          say nexus_remote.get_artifact_info(artifact), :green
         end
 
         desc "search_for_artifacts", "Prints out some information about some junk."
         def search_for_artifacts(artifact)
-          @nexus_remote.search_for_artifacts(artifact).each{|output| say output, :green}
+          nexus_remote.search_for_artifacts(artifact).each{|output| say output, :green}
         end
 
         desc "get_artifact_custom_info artifact", "Gets and returns the custom metadata in XML format about a particular artifact."
         def get_artifact_custom_info(artifact)
-          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-          say @nexus_remote.get_artifact_custom_info(artifact), :green
+          raise NotNexusProException unless nexus_remote.kind_of? ProRemote
+          say nexus_remote.get_artifact_custom_info(artifact), :green
         end
 
         desc "update_artifact_custom_info artifact param1 param2 ...", "Updates the artifact custom metadata with the given key-value pairs."
         def update_artifact_custom_info(artifact, *params)
-          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-          @nexus_remote.update_artifact_custom_info(artifact, *params)
+          raise NotNexusProException unless nexus_remote.kind_of? ProRemote
+          nexus_remote.update_artifact_custom_info(artifact, *params)
           say "Custom metadata for artifact #{artifact} has been successfully pushed to Nexus.", :green
         end
 
         desc "clear_artifact_custom_info artifact", "Clears the artifact custom metadata."
         def clear_artifact_custom_info(artifact)
-          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-          @nexus_remote.clear_artifact_custom_info(artifact)
+          raise NotNexusProException unless nexus_remote.kind_of? ProRemote
+          nexus_remote.clear_artifact_custom_info(artifact)
           say "Custom metadata for artifact #{artifact} has been successfully cleared.", :green
         end
 
         desc "search_artifacts_custom param1 param2 ... ", "Searches for artifacts using artifact metadata and returns the result as a list with items in XML format."
         def search_artifacts_custom(*params)
-          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-          say (s = @nexus_remote.search_artifacts_custom(*params)) == "" ? "No search results." : s, :green
+          raise NotNexusProException unless nexus_remote.kind_of? ProRemote
+          say (s = nexus_remote.search_artifacts_custom(*params)) == "" ? "No search results." : s, :green
         end
 
         desc "get_nexus_configuration", "Prints out configuration from the .nexus_cli file that helps inform where artifacts will be uploaded."
         def get_nexus_configuration
-          config = @nexus_remote.configuration
+          config = nexus_remote.configuration
           say "********* Reading CLI configuration from #{File.expand_path('~/.nexus_cli')} *********", :blue
           say "Nexus URL: #{config['url']}", :blue
           say "Nexus Repository: #{config['repository']}", :blue
@@ -98,7 +89,7 @@ module NexusCli
 
         desc "get_nexus_status", "Prints out information about the Nexus instance."
         def get_nexus_status
-          data = @nexus_remote.status
+          data = nexus_remote.status
           say "********* Getting Nexus status from #{data['base_url']} *********", :blue
           say "Application Name: #{data['app_name']}", :blue
           say "Version: #{data['version']}", :blue
@@ -110,7 +101,7 @@ module NexusCli
 
         desc "get_global_settings", "Prints out your Nexus' current setttings and saves them to a file."
         def get_global_settings
-          @nexus_remote.get_global_settings
+          nexus_remote.get_global_settings
           say "Your current Nexus global settings have been written to the file: ~/.nexus/global_settings.json", :blue
         end
 
@@ -120,13 +111,13 @@ module NexusCli
           :desc => "A String of the JSON you wish to upload."
         desc "upload_global_settings", "Uploads a global_settings.json file to your Nexus to update its settings."
         def upload_global_settings
-          @nexus_remote.upload_global_settings(options[:json])
+          nexus_remote.upload_global_settings(options[:json])
           say "Your global_settings.json file has been uploaded to Nexus", :blue
         end
 
         desc "reset_global_settings", "Resets your Nexus global_settings to their out-of-the-box defaults."
         def reset_global_settings
-          @nexus_remote.reset_global_settings
+          nexus_remote.reset_global_settings
           say "Your Nexus global settings have been reset to their default values", :blue
         end
 
@@ -138,26 +129,26 @@ module NexusCli
           :desc => "The url of the actual repository for the proxy repository to use."
         desc "create_repository name", "Creates a new Repository with the provided name."
         def create_repository(name)
-          if @nexus_remote.create_repository(name, options[:proxy], options[:url])
+          if nexus_remote.create_repository(name, options[:proxy], options[:url])
             say "A new Repository named #{name} has been created.", :blue
           end
         end
 
         desc "delete_repository name", "Deletes a Repository with the provided name."
         def delete_repository(name)
-          if @nexus_remote.delete_repository(name)
+          if nexus_remote.delete_repository(name)
             say "The Repository named #{name} has been deleted.", :blue
           end
         end
 
         desc "get_repository_info name", "Finds and returns information about the provided Repository."
         def get_repository_info(name)
-          say @nexus_remote.get_repository_info(name), :green
+          say nexus_remote.get_repository_info(name), :green
         end
 
         desc "get_users", "Returns XML representing the users in Nexus."
         def get_users
-          say @nexus_remote.get_users, :green
+          say nexus_remote.get_users, :green
         end
 
         method_option :username,
@@ -193,7 +184,7 @@ module NexusCli
         def create_user         
           params = ask_user(options)
 
-          if @nexus_remote.create_user(params) 
+          if nexus_remote.create_user(params) 
             say "A user with the ID of #{params[:userId]} has been created.", :blue
           end
         end
@@ -228,14 +219,14 @@ module NexusCli
           params = ask_user(options, false, false)
           params[:userId] = user_id
 
-          if @nexus_remote.update_user(params)
+          if nexus_remote.update_user(params)
             say "User #{user_id} has been updated.", :blue
           end
         end
 
         desc "delete_user user_id", "Deletes the user with the given id."
         def delete_user(user_id)
-          if @nexus_remote.delete_user(user_id)
+          if nexus_remote.delete_user(user_id)
             say "User #{user_id} has been deleted.", :blue
           end
         end
@@ -264,45 +255,45 @@ module NexusCli
           params = {:userId => user_id}
           params[:oldPassword] = oldPassword
           params[:newPassword] = newPassword
-          if @nexus_remote.change_password(params)
+          if nexus_remote.change_password(params)
             say "The password for user #{user_id} has been updated.", :blue
           end
         end
 
         desc "get_pub_sub repository_id", "Returns the publish/subscribe status of the given repository."
         def get_pub_sub(repository_id)
-          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-          say @nexus_remote.get_pub_sub(repository_id), :green
+          raise NotNexusProException unless nexus_remote.kind_of? ProRemote
+          say nexus_remote.get_pub_sub(repository_id), :green
         end
 
         desc "enable_artifact_publish repository_id", "Sets a repository to enable the publishing of updates about its artifacts."
         def enable_artifact_publish(repository_id)
-          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-          if @nexus_remote.enable_artifact_publish(repository_id)
+          raise NotNexusProException unless nexus_remote.kind_of? ProRemote
+          if nexus_remote.enable_artifact_publish(repository_id)
             say "The repository #{repository_id} will now publish updates.", :blue
           end
         end
 
         desc "disable_artifact_publish repository_id", "Sets a repository to disable the publishing of updates about its artifacts."
         def disable_artifact_publish(repository_id)
-          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-          if @nexus_remote.disable_artifact_publish(repository_id)
+          raise NotNexusProException unless nexus_remote.kind_of? ProRemote
+          if nexus_remote.disable_artifact_publish(repository_id)
             say "The repository #{repository_id} is no longer publishing updates.", :blue
           end
         end
 
         desc "enable_artifact_subscribe repository_id", "Sets a repository to subscribe to updates about artifacts."
         def enable_artifact_subscribe(repository_id)
-          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-          if @nexus_remote.enable_artifact_subscribe(repository_id)
+          raise NotNexusProException unless nexus_remote.kind_of? ProRemote
+          if nexus_remote.enable_artifact_subscribe(repository_id)
             say "The repository #{repository_id} is now subscribed for artifact updates.", :blue
           end
         end
 
         desc "disable_artifact_subscribe repository_id", "Sets a repository to stop subscribing to updates about artifacts."
         def disable_artifact_subscribe(repository_id)
-          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-          if @nexus_remote.disable_artifact_subscribe(repository_id)
+          raise NotNexusProException unless nexus_remote.kind_of? ProRemote
+          if nexus_remote.disable_artifact_subscribe(repository_id)
             say "The repository #{repository_id} is no longer subscribed for artifact updates.", :blue
           end
         end
@@ -315,20 +306,20 @@ module NexusCli
           :desc => "An available port that will be used for Smart Proxy connections."
         desc "enable_smart_proxy", "Enables Smart Proxy on the server."
         def enable_smart_proxy
-          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-          say @nexus_remote.enable_smart_proxy(options[:host], options[:port])
+          raise NotNexusProException unless nexus_remote.kind_of? ProRemote
+          say nexus_remote.enable_smart_proxy(options[:host], options[:port])
         end
 
         desc "disable_smart_proxy", "Disables Smart Proxy on the server."
         def disable_smart_proxy
-          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-          say @nexus_remote.disable_smart_proxy          
+          raise NotNexusProException unless nexus_remote.kind_of? ProRemote
+          say nexus_remote.disable_smart_proxy          
         end
 
         desc "get_smart_proxy_settings", "Returns the Smart Proxy settings of the server."
         def get_smart_proxy_settings
-          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-          say JSON.pretty_generate(JSON.parse(@nexus_remote.get_smart_proxy_settings)), :green
+          raise NotNexusProException unless nexus_remote.kind_of? ProRemote
+          say JSON.pretty_generate(JSON.parse(nexus_remote.get_smart_proxy_settings)), :green
         end
 
         method_option :certificate,
@@ -341,82 +332,98 @@ module NexusCli
           :desc => "A description to give to the trusted key. It is probably best to make this meaningful."
         desc "add_trusted_key", "Adds a new trusted key to the Smart Proxy configuration."
         def add_trusted_key
-          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-          if @nexus_remote.add_trusted_key(options[:certificate], options[:description])
+          raise NotNexusProException unless nexus_remote.kind_of? ProRemote
+          if nexus_remote.add_trusted_key(options[:certificate], options[:description])
             say "A new trusted key has been added to the nexus.", :blue
           end
         end
 
         desc "delete_trusted_key key_id", "Deletes a trusted key using the given key_id."
         def delete_trusted_key(key_id)
-          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-          if @nexus_remote.delete_trusted_key(key_id)
+          raise NotNexusProException unless nexus_remote.kind_of? ProRemote
+          if nexus_remote.delete_trusted_key(key_id)
             say "The trusted key with an id of #{key_id} has been deleted.", :blue
           end
         end
 
         desc "get_trusted_keys", "Returns the trusted keys of the server."
         def get_trusted_keys
-          raise NotNexusProException unless @nexus_remote.kind_of? ProRemote
-          say JSON.pretty_generate(JSON.parse(@nexus_remote.get_trusted_keys)), :green
+          raise NotNexusProException unless nexus_remote.kind_of? ProRemote
+          say JSON.pretty_generate(JSON.parse(nexus_remote.get_trusted_keys)), :green
         end
 
         desc "get_license_info", "Returns the license information of the server."
         def get_license_info
-          say @nexus_remote.get_license_info, :green
+          say nexus_remote.get_license_info, :green
         end
 
         desc "install_license license_file", "Installs a license file into the server."
         def install_license(license_file)
-          @nexus_remote.install_license(license_file)
+          nexus_remote.install_license(license_file)
         end
 
         desc "get_logging_info", "Gets the log4j Settings of the Nexus server."
         def get_logging_info
-          say @nexus_remote.get_logging_info, :green
+          say nexus_remote.get_logging_info, :green
         end
 
         desc "set_logger_level level", "Updates the log4j logging level to a new value."
         def set_logger_level(level)
-          if @nexus_remote.set_logger_level(level)
+          if nexus_remote.set_logger_level(level)
             say "The logging level of Nexus has been set to #{level.upcase}", :blue
           end
         end
 
         desc "create_group_repository name", "Creates a new repository group with the given name."
         def create_group_repository(name)
-          if @nexus_remote.create_group_repository(name)
+          if nexus_remote.create_group_repository(name)
             say "A new group repository named #{name} has been created.", :blue
           end
         end
 
         desc "get_group_repository group_id", "Gets information about the given group repository."
         def get_group_repository(group_id)
-          say @nexus_remote.get_group_repository(group_id), :green
+          say nexus_remote.get_group_repository(group_id), :green
         end
 
         desc "add_to_group_repository group_id repository_to_add_id", "Adds a repository with the given id into the group repository."
         def add_to_group_repository(group_id, repository_to_add_id)
-          if @nexus_remote.add_to_group_repository(group_id, repository_to_add_id)
+          if nexus_remote.add_to_group_repository(group_id, repository_to_add_id)
             say "The repository #{repository_to_add_id} has been added to the repository group #{group_id}", :blue
           end
         end
 
         desc "remove_from_group_repository group_id repository_to_remove_id", "Remove a repository with the given id from the group repository."
         def remove_from_group_repository(group_id, repository_to_remove_id)
-          if @nexus_remote.remove_from_group_repository(group_id, repository_to_remove_id)
+          if nexus_remote.remove_from_group_repository(group_id, repository_to_remove_id)
             say "The repository with an id of #{repository_to_remove_id} has been removed from the group repository, #{group_id}.", :blue
           end
         end
 
         desc "delete_group_repository group_id","Deletes a group repository based on the given id."
         def delete_group_repository(group_id)
-          if @nexus_remote.delete_group_repository(group_id)
+          if nexus_remote.delete_group_repository(group_id)
             say "The group repository, #{group_id} has been deleted.", :blue
           end
         end
 
+        desc "transfer_artifact artifact from_repository to_repository", "Transfers a given artifact from one repository to another."
+        def transfer_artifact(artifact, from_repository, to_repository)
+          if nexus_remote.transfer_artifact(artifact, from_repository, to_repository)
+            say "The artifact #{artifact} has been transferred from #{from_repository} to #{to_repository}.", :blue
+          end
+        end
+
         private
+
+          def nexus_remote
+            begin
+              nexus_remote ||= Factory.create(options[:overrides], options[:ssl_verify])
+            rescue NexusCliError => e
+              say e.message, :red
+              exit e.status_code
+            end
+          end
 
           def ask_user(params, ask_username=true, ask_password=true)
             username = params[:username]

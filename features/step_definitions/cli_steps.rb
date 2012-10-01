@@ -7,6 +7,11 @@ When /^I call the nexus "(.*?)" command$/ do |command|
   step "I run `nexus-cli #{command} --overrides=#{get_overrides_string}`"
 end
 
+When /^I call the nexus "(.*?)" command overriding "(.*?)"$/ do |command, overrides|
+
+  step "I run `nexus-cli #{command} --overrides=#{create_step_overrides(overrides)}`"
+end
+
 When /^I call the nexus "(.*?)" command as the "(.*?)" user with password "(.*?)"$/ do |command, username, password|
   overrides = get_overrides_string.gsub('username:admin', "username:#{username}")
   overrides.gsub!('password:admin123', "password:#{password}")
@@ -30,6 +35,11 @@ Then /^I should have a copy of the "(.*?)" artifact in a temp directory$/ do |fi
 end
 
 When /^I delete an artifact with the GAV of "(.*)"$/ do |gav|
+  nexus_remote.delete_artifact(gav)
+end
+
+When /^I delete an artifact with the GAV of "(.*?)" from the "(.*?)" repository$/ do |gav, repository|
+  nexus_remote.configuration["repository"] = repository
   nexus_remote.delete_artifact(gav)
 end
 
