@@ -105,7 +105,7 @@ module NexusCli
     end
 
     def artifact_publish(repository_id, params)
-      response = nexus.put(nexus_url("service/local/smartproxy/pub-sub/#{repository_id}"), :body => create_pub_sub_json(params), :header => DEFAULT_CONTENT_TYPE_HEADER)
+      response = nexus.put(nexus_url("service/local/smartproxy/pub-sub/#{sanitize_for_id(repository_id)}"), :body => create_pub_sub_json(params), :header => DEFAULT_CONTENT_TYPE_HEADER)
       case response.status
       when 200
         return true
@@ -114,11 +114,12 @@ module NexusCli
       end
     end
 
-    def enable_artifact_subscribe(repository_id)
+    def enable_artifact_subscribe(repository_id, preemptive_fetch)
       raise NotProxyRepositoryException.new(repository_id) unless Nokogiri::XML(get_repository_info(repository_id)).xpath("/repository/data/repoType").first.content == "proxy"
 
       params = {:repositoryId => repository_id}
       params[:subscribe] = true
+      params[:preemptiveFetch] = preemptive_fetch
       artifact_subscribe(repository_id, params)
     end
 
@@ -131,7 +132,7 @@ module NexusCli
     end
 
     def artifact_subscribe(repository_id, params)
-      response = nexus.put(nexus_url("service/local/smartproxy/pub-sub/#{repository_id}"), :body => create_pub_sub_json(params), :header => DEFAULT_CONTENT_TYPE_HEADER)
+      response = nexus.put(nexus_url("service/local/smartproxy/pub-sub/#{sanitize_for_id(repository_id)}"), :body => create_pub_sub_json(params), :header => DEFAULT_CONTENT_TYPE_HEADER)
       case response.status
       when 200
         return true

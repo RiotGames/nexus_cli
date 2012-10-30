@@ -88,7 +88,7 @@ module NexusCli
       destination = File.join(File.expand_path(destination || "."), "#{artifact_id}-#{version}.#{extension}")
       response = nexus.get(nexus_url("service/local/artifact/maven/redirect"), :query => {:g => group_id, :a => artifact_id, :v => version, :e => extension, :r => configuration['repository']})
       case response.status
-      when 301
+      when 301, 307
         # Follow redirect and stream in chunks.
         artifact_file = File.open(destination, "wb") do |io|
           nexus.get(response.content.gsub(/If you are not automatically redirected use this url: /, "")) do |chunk|

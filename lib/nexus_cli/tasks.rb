@@ -282,10 +282,14 @@ module NexusCli
           end
         end
 
+        method_option :preemptive_fetch,
+          :type => :boolean,
+          :default => false,
+          :desc => "Subscribing repositories that preemtively fetch will grab artifacts as updates are received."
         desc "enable_artifact_subscribe repository_id", "Sets a repository to subscribe to updates about artifacts."
         def enable_artifact_subscribe(repository_id)
           raise NotNexusProException unless nexus_remote.kind_of? ProRemote
-          if nexus_remote.enable_artifact_subscribe(repository_id)
+          if nexus_remote.enable_artifact_subscribe(repository_id, options[:preemptive_fetch])
             say "The repository #{repository_id} is now subscribed for artifact updates.", :blue
           end
         end
