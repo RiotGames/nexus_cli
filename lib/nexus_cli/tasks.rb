@@ -121,15 +121,24 @@ module NexusCli
           say "Your Nexus global settings have been reset to their default values", :blue
         end
 
+        method_option :id,
+          :type => :string,
+          :desc => "The id of the repository to use."
+        method_option :policy,
+          :type => :string,
+          :desc => "Repo policy [RELEASE|SNAPSHOT], RELEASE by default"
+        method_option :provider,
+          :type => :string,
+          :desc => "Repo provider (maven2 by default)"
         method_option :proxy,
           :type => :boolean,
           :desc => "True if the new repository should be a proxy repository"
-          method_option :url,
+        method_option :url,
           :type => :string,
           :desc => "The url of the actual repository for the proxy repository to use."
         desc "create_repository name", "Creates a new Repository with the provided name."
         def create_repository(name)
-          if nexus_remote.create_repository(name, options[:proxy], options[:url])
+          if nexus_remote.create_repository(name, options[:proxy], options[:url], options[:id], options[:policy], options[:provider])
             say "A new Repository named #{name} has been created.", :blue
           end
         end

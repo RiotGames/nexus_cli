@@ -238,13 +238,16 @@ module NexusCli
     # @param  name [String] the name of the repository to create
     # @param  proxy [Boolean] true if this is a proxy repository
     # @param  url [String] the url for the proxy repository to point to
+    # @param  id [String] the id of repository 
+    # @param  policy [String] repository policy (RELEASE|SNAPSHOT)
+    # @param  provider [String] repo provider (maven2 by default)
     # 
     # @return [Boolean] returns true on success
-    def create_repository(name, proxy, url)
+    def create_repository(name, proxy, url, id, policy, provider)
       json = if proxy
-        create_proxy_repository_json(name, url)
+        create_proxy_repository_json(name, url, id, policy, provider)
       else
-        create_hosted_repository_json(name)
+        create_hosted_repository_json(name, id, policy, provider)
       end
       response = nexus.post(nexus_url("service/local/repositories"), :body => json, :header => DEFAULT_CONTENT_TYPE_HEADER)
       case response.status
@@ -526,34 +529,34 @@ module NexusCli
       return group_id, artifact_id, version, extension
     end
 
-    def create_hosted_repository_json(name)
-      params = {:provider => "maven2"}
+    def create_hosted_repository_json(name, id, policy, provider)
+      params = {:provider => provider.nil? ? "maven2": provider}
       params[:providerRole] = "org.sonatype.nexus.proxy.repository.Repository"
       params[:exposed] = true
       params[:browseable] = true
       params[:indexable] = true
       params[:repoType] = "hosted"
-      params[:repoPolicy] = "RELEASE"
+      params[:repoPolicy] = policy.nil? ? "RELEASE" : ["RELEASE", "SNAPSHOT"].include?(policy) ? policy : "RELEASE" 
       params[:name] = name
-      params[:id] = sanitize_for_id(name)
+      params[:id] = id.nil? ? sanitize_for_id(name) : sanitize_for_id(id)
       params[:format] = "maven2"
       JSON.dump(:data => params)
     end
 
-    def create_proxy_repository_json(name, url)
-      params = {:provider => "maven2"}
+    def create_proxy_repository_json(name, url, id, policy, provider)
+      params = {:provider => provider.nil? ? "maven2" : provider}
       params[:providerRole] = "org.sonatype.nexus.proxy.repository.Repository"
       params[:exposed] = true
       params[:browseable] = true
       params[:indexable] = true
       params[:repoType] = "proxy"
-      params[:repoPolicy] = "RELEASE"
+      params[:repoPolicy] = policy.nil? ? "RELEASE" : ["RELEASE", "SNAPSHOT"].include?(policy) ? policy : "RELEASE" 
       params[:checksumPolicy] = "WARN"
       params[:writePolicy] = "READ_ONLY"
       params[:downloadRemoteIndexes] = true
       params[:autoBlockActive] = false
       params[:name] = name
-      params[:id] = sanitize_for_id(name)
+      params[:id] = id.nil? ? sanitize_for_id(name) : sanitize_for_id(id)
       params[:remoteStorage] = {:remoteStorageUrl => url.nil? ? "http://change-me.com/" : url}
       JSON.dump(:data => params)
     end
