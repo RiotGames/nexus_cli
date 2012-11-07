@@ -1,8 +1,10 @@
+require 'erb'
 require 'httpclient'
-require 'nokogiri'
-require 'yaml'
 require 'json'
 require 'jsonpath'
+require 'nokogiri'
+require 'tempfile'
+require 'yaml'
 
 module NexusCli
   # @author Kyle Allan <kallan@riotgames.com>
@@ -24,8 +26,8 @@ module NexusCli
     # @return [HTTPClient]
     def nexus
       client = HTTPClient.new
-      client.send_timeout = 600
-      client.receive_timeout = 600
+      client.send_timeout = 6000
+      client.receive_timeout = 6000
       # https://github.com/nahi/httpclient/issues/63
       client.set_auth(nil, configuration['username'], configuration['password'])
       client.www_auth.basic_auth.challenge(configuration['url'])
@@ -113,9 +115,18 @@ module NexusCli
     # @return [Boolean] returns true when successful
     def push_artifact(artifact, file)
       group_id, artifact_id, version, extension = parse_artifact_string(artifact)
-      response = nexus.post(nexus_url("service/local/artifact/maven/content"), {:hasPom => false, :g => group_id, :a => artifact_id, :v => version, :e => extension, :p => extension, :r => configuration['repository'], :file => File.open(file)})
+      file_name = "#{artifact_id}-#{version}.#{extension}"
+      put_string = "content/repositories/#{configuration['repository']}/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}/#{file_name}"
+      response = nexus.put(nexus_url(put_string), File.open(file))
+
       case response.status
       when 201
+        pom_name = "#{artifact_id}-#{version}.pom"
+        put_string = "content/repositories/#{configuration['repository']}/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}/#{pom_name}"
+        pom_file = generate_fake_pom(pom_name, group_id, artifact_id, version, extension)
+        nexus.put(nexus_url(put_string), File.open(pom_file))
+        delete_string = "/service/local/metadata/repositories/#{configuration['repository']}/content/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}"
+        nexus.delete(nexus_url(delete_string))
         return true
       when 400
         raise BadUploadRequestException
@@ -602,6 +613,14 @@ module NexusCli
       params[:id] = group_repository_json["data"]["id"]
       params[:name] = group_repository_json["data"]["name"]
       JSON.dump(:data => params)
+    end
+
+    def generate_fake_pom(pom_name, group_id, artifact_id, version, extension)
+      Tempfile.open(pom_name) do |file|
+        template_path = File.join(NexusCli.root, "data", "pom.xml.erb")
+        file.puts ERB.new(File.read(template_path)).result(binding)
+        file
+      end
     end
   end
 end
