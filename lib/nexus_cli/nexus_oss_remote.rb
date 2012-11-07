@@ -391,8 +391,8 @@ module NexusCli
       end
     end
 
-    def create_group_repository(name)
-      response = nexus.post(nexus_url("service/local/repo_groups"), :body => create_group_repository_json(name), :header => DEFAULT_CONTENT_TYPE_HEADER)
+    def create_group_repository(name, id, provider)
+      response = nexus.post(nexus_url("service/local/repo_groups"), :body => create_group_repository_json(name, id, provider), :header => DEFAULT_CONTENT_TYPE_HEADER)
       case response.status
       when 201
         return true
@@ -574,10 +574,10 @@ module NexusCli
       JSON.dump(:data => params)
     end
 
-    def create_group_repository_json(name)
-      params = {:id => sanitize_for_id(name)}
+    def create_group_repository_json(name, id, provider)
+      params = {:id => id.nil? ? sanitize_for_id(name) : sanitize_for_id(id)}
       params[:name] = name
-      params[:provider] = "maven2"
+      params[:provider] = provider.nil? ? "maven2" : provider
       params[:exposed] = true
       JSON.dump(:data => params)
     end

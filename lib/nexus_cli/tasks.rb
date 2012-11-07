@@ -388,8 +388,14 @@ module NexusCli
         end
 
         desc "create_group_repository name", "Creates a new repository group with the given name."
+        method_option :id,
+          :type => :string,
+          :desc => "The id of the group repository to use (calculated from name by default)."
+        method_option :provider,
+          :type => :string,
+          :desc => "Group repo provider (maven2 by default)."
         def create_group_repository(name)
-          if nexus_remote.create_group_repository(name)
+          if nexus_remote.create_group_repository(name, options[:id], options[:provider])
             say "A new group repository named #{name} has been created.", :blue
           end
         end
