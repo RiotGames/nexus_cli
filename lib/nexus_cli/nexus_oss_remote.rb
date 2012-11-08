@@ -515,12 +515,16 @@ module NexusCli
     # @return [type] [description]
     def format_search_results(doc, group_id, artifact_id)
       versions = doc.xpath("//version").inject([]) {|array,node| array << "#{node.content()}"}
-      indent_size = versions.max{|a,b| a.length <=> b.length}.size+4
-      formated_results = ['Found Versions:']
-      versions.inject(formated_results) do |array,version|
-        temp_version = version + ":"
-        array << "#{temp_version.ljust(indent_size)} `nexus-cli pull #{group_id}:#{artifact_id}:#{version}:tgz`"
-      end
+      if versions.length > 0
+        indent_size = versions.max{|a,b| a.length <=> b.length}.size+4
+        formated_results = ['Found Versions:']
+        versions.inject(formated_results) do |array,version|
+          temp_version = version + ":"
+          array << "#{temp_version.ljust(indent_size)} `nexus-cli pull #{group_id}:#{artifact_id}:#{version}:tgz`"
+        end
+      else 
+        formated_results = ['No Versions Found.']
+      end 
     end
 
 
