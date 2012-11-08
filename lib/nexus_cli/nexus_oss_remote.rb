@@ -117,7 +117,7 @@ module NexusCli
       group_id, artifact_id, version, extension = parse_artifact_string(artifact)
       file_name = "#{artifact_id}-#{version}.#{extension}"
       put_string = "content/repositories/#{configuration['repository']}/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}/#{file_name}"
-      response = nexus.put(nexus_url(put_string), File.open(file))
+      response = nexus.put(nexus_url(put_string), :body => {"file" => File.open(file)})
 
       case response.status
       when 201
