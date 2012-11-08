@@ -609,6 +609,7 @@ module NexusCli
       params = {:repositories => repositories}
       params[:id] = group_repository_json["data"]["id"]
       params[:name] = group_repository_json["data"]["name"]
+      params[:exposed] = group_repository_json["data"]["exposed"]
       JSON.dump(:data => params)
     end
 
