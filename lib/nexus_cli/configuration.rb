@@ -36,6 +36,7 @@ module NexusCli
 
       def validate_config(configuration)
         ["url", "repository", "username", "password"].each do |key|
+          raise self.path
           raise InvalidSettingsException.new(key) if configuration[key].blank?
         end
       end
