@@ -55,6 +55,7 @@ class Default < Thor
 
     no_tasks do
       def run_unit
+        ENV["NEXUS_CONFIG"] = File.expand_path(File.join("spec", "fixtures", "nexus.config"))
         run "rspec --color --format=documentation spec"
       end
 
