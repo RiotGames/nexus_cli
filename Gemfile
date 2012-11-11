@@ -1,2 +1,3 @@
-gemspec
+source :rubygems
 
+gemspec

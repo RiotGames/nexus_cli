@@ -1,0 +1,5 @@
+script: "bundle exec thor spec:unit"
+language: ruby
+rvm:
+  - 1.9.2
+  - 1.9.3

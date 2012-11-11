@@ -47,7 +47,7 @@ def temp_dir
 end
 
 def nexus_remote
-  @nexus_remote ||= NexusCli::Factory.create(get_overrides)
+  @nexus_remote ||= NexusCli::RemoteFactory.create(get_overrides)
 end
 
 at_exit do

@@ -9,15 +9,13 @@ require 'yaml'
 module NexusCli
   # @author Kyle Allan <kallan@riotgames.com>
   class OSSRemote
+    attr_reader :configuration
+
     # @param [Hash] overrides
     # @param [Boolean] ssl_verify
     def initialize(overrides, ssl_verify=true)
       @configuration = Configuration::parse(overrides)
       @ssl_verify = ssl_verify
-    end
-
-    def configuration
-      return @configuration if @configuration
     end
 
     # Returns an HTTPClient instance with settings to connect
@@ -32,7 +30,8 @@ module NexusCli
       client.set_auth(nil, configuration['username'], configuration['password'])
       client.www_auth.basic_auth.challenge(configuration['url'])
       client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE unless @ssl_verify
-      return client
+      
+      client
     end
 
     # Joins a given url to the current url stored in the configuraiton
@@ -248,7 +247,6 @@ module NexusCli
       end
     end
 
-
     # Creates a repository that the Nexus uses to hold artifacts.
     # 
     # @param  name [String] the name of the repository to create
@@ -355,7 +353,6 @@ module NexusCli
         raise UnexpectedStatusCodeException.new(response.status)
       end
     end
-
 
     # Changes the password of a user
     # 
@@ -480,7 +477,6 @@ module NexusCli
 
     private
 
-
     # Transforms a given [String] into a sanitized version by
     # replacing spaces with underscores and downcasing.
     # 
@@ -509,7 +505,6 @@ module NexusCli
       end
     end
 
-
     # Formats the given XML into an [Array<String>] so it
     # can be displayed nicely.
     # 
@@ -531,7 +526,6 @@ module NexusCli
         formated_results = ['No Versions Found.']
       end 
     end
-
 
     # Parses a given artifact string into its
     # four, distinct, Maven pieces.

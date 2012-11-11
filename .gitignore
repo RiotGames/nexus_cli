@@ -6,3 +6,4 @@ tmp/
 pkg/
 *.gem
 global_settings.json
+Gemfile.lock

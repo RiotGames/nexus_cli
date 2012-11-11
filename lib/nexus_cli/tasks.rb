@@ -437,7 +437,7 @@ module NexusCli
 
           def nexus_remote
             begin
-              nexus_remote ||= Factory.create(options[:overrides], options[:ssl_verify])
+              nexus_remote ||= RemoteFactory.create(options[:overrides], options[:ssl_verify])
             rescue NexusCliError => e
               say e.message, :red
               exit e.status_code

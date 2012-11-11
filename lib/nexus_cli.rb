@@ -1,17 +1,22 @@
-require 'nexus_cli/tasks'
-require 'nexus_cli/cli'
 require 'nexus_cli/errors'
 require 'nexus_cli/kernel'
-require 'nexus_cli/nexus_remote_factory'
-require 'nexus_cli/nexus_oss_remote'
-require 'nexus_cli/nexus_pro_remote'
-require 'nexus_cli/configuration'
-require 'nexus_cli/n3_metadata'
 
 module NexusCli
+  DEFAULT_ACCEPT_HEADER = {
+    "Accept" => "application/json"
+  }.freeze
+  
+  DEFAULT_CONTENT_TYPE_HEADER = {
+    "Content-Type" => "application/json"
+  }.freeze
 
-  DEFAULT_ACCEPT_HEADER = {"Accept" => "application/json"}
-  DEFAULT_CONTENT_TYPE_HEADER = {"Content-Type" => "application/json"}
+  autoload :Tasks, 'nexus_cli/tasks'
+  autoload :Cli, 'nexus_cli/cli'
+  autoload :RemoteFactory, 'nexus_cli/remote_factory'
+  autoload :OSSRemote, 'nexus_cli/oss_remote'
+  autoload :ProRemote, 'nexus_cli/pro_remote'
+  autoload :Configuration, 'nexus_cli/configuration'
+  autoload :N3Metadata, 'nexus_cli/n3_metadata'
 
   class << self
     def root

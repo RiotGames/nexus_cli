@@ -23,9 +23,14 @@ describe NexusCli do
 
   it "gives you an error when you try to update a user that doesnt exist" do
     stub_request(:get, "http://admin:admin123@localhost:8081/nexus/service/local/users/qwertyasdf").
-         with(:headers => {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
-         to_return(:status => 404, :body => "", :headers => {})
-    expect {remote.update_user(:userId => "qwertyasdf")}.to raise_error(NexusCli::UserNotFoundException)
+      with(:headers => {
+        'Accept' => 'application/json',
+        'Authorization' => 'Basic YWRtaW46YWRtaW4xMjM='
+      }).to_return(:status => 404, :body => "", :headers => {})
+
+    expect {
+      remote.update_user(:userId => "qwertyasdf")
+    }.to raise_error(NexusCli::UserNotFoundException)
   end
 
   it "gives you an error when you try to set the logging level to something weird" do

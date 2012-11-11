@@ -3,7 +3,7 @@ require 'nokogiri'
 require 'yaml'
 
 module NexusCli
-  class Factory
+  class RemoteFactory
     class << self
       def create(overrides, ssl_verify=true)
         @configuration = Configuration::parse(overrides)
