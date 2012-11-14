@@ -33,8 +33,8 @@ module NexusCli
           :desc => "A different folder other than the current working directory."
         desc "pull_artifact artifact", "Pulls an artifact from Nexus and places it on your machine."
         def pull_artifact(artifact)
-          path_to_artifact = nexus_remote.pull_artifact(artifact, options[:destination])
-          say "Artifact has been retrived and can be found at path: #{path_to_artifact}", :green
+          pull_artifact_response = nexus_remote.pull_artifact(artifact, options[:destination])
+          say "Artifact has been retrived and can be found at path: #{pull_artifact_response[:file_path]}", :green
         end
 
         desc "push_artifact artifact file", "Pushes an artifact from your machine onto the Nexus."

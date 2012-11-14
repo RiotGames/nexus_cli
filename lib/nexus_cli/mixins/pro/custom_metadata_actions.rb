@@ -1,9 +1,7 @@
-require 'httpclient'
-require 'nokogiri'
-require 'yaml'
-
 module NexusCli
-  class ProRemote < OSSRemote
+  # @author Kyle Allan <kallan@riotgames.com>
+  module CustomMetadataActions
+
     # Gets the custom metadata for an artifact
     # @param [String] artifact The GAVE string of the artifact
     # @result [String] The resulting custom metadata xml from the get operation
@@ -82,186 +80,6 @@ module NexusCli
       return result.nil? ? "" : result.to_xml(:indent => 4)
     end
 
-    def get_pub_sub(repository_id)
-      response = nexus.get(nexus_url("service/local/smartproxy/pub-sub/#{repository_id}"))
-      case response.status
-      when 200
-        return response.content
-      else
-        raise UnexpectedStatusCodeException.new(response.status)
-      end
-    end
-
-    def enable_artifact_publish(repository_id)
-      params = {:repositoryId => repository_id}
-      params[:publish] = true
-      artifact_publish(repository_id, params)
-    end
-
-    def disable_artifact_publish(repository_id)
-      params = {:repositoryId => repository_id}
-      params[:publish] = false
-      artifact_publish(repository_id, params)
-    end
-
-    def artifact_publish(repository_id, params)
-      response = nexus.put(nexus_url("service/local/smartproxy/pub-sub/#{sanitize_for_id(repository_id)}"), :body => create_pub_sub_json(params), :header => DEFAULT_CONTENT_TYPE_HEADER)
-      case response.status
-      when 200
-        return true
-      else
-        raise UnexpectedStatusCodeException.new(response.status)
-      end
-    end
-
-    def enable_artifact_subscribe(repository_id, preemptive_fetch)
-      raise NotProxyRepositoryException.new(repository_id) unless Nokogiri::XML(get_repository_info(repository_id)).xpath("/repository/data/repoType").first.content == "proxy"
-
-      params = {:repositoryId => repository_id}
-      params[:subscribe] = true
-      params[:preemptiveFetch] = preemptive_fetch
-      artifact_subscribe(repository_id, params)
-    end
-
-    def disable_artifact_subscribe(repository_id)
-      raise NotProxyRepositoryException.new(repository_id) unless Nokogiri::XML(get_repository_info(repository_id)).xpath("/repository/data/repoType").first.content == "proxy"
-
-      params = {:repositoryId => repository_id}
-      params[:subscribe] = false
-      artifact_subscribe(repository_id, params)
-    end
-
-    def artifact_subscribe(repository_id, params)
-      response = nexus.put(nexus_url("service/local/smartproxy/pub-sub/#{sanitize_for_id(repository_id)}"), :body => create_pub_sub_json(params), :header => DEFAULT_CONTENT_TYPE_HEADER)
-      case response.status
-      when 200
-        return true
-      else
-        raise UnexpectedStatusCodeException.new(response.status)
-      end
-    end
-
-    def enable_smart_proxy(host=nil, port=nil)
-      params = {:enabled => true}
-      params[:host] = host unless host.nil?
-      params[:port] = port unless port.nil?
-      smart_proxy(params)
-    end
-
-    def disable_smart_proxy
-      params = {:enabled => false}
-      smart_proxy(params)
-    end
-
-    def smart_proxy(params)
-      response = nexus.put(nexus_url("service/local/smartproxy/settings"), :body => create_smart_proxy_settings_json(params), :header => DEFAULT_CONTENT_TYPE_HEADER)
-      case response.status
-      when 200
-        return true
-      else
-        raise UnexpectedStatusCodeException.new(response.status)
-      end
-    end
-
-    def get_smart_proxy_settings
-      response = nexus.get(nexus_url("service/local/smartproxy/settings"), :header => DEFAULT_ACCEPT_HEADER)
-      case response.status
-      when 200
-        return response.content
-      else
-        raise UnexpectedStatusCodeException.new(response.status)
-      end
-    end
-
-    def get_smart_proxy_key
-      response = nexus.get(nexus_url("service/local/smartproxy/settings"), :header => DEFAULT_ACCEPT_HEADER)
-      case response.status
-      when 200
-        return response.content
-      else
-        raise UnexpectedStatusCodeException.new(response.status)
-      end
-    end
-
-    def add_trusted_key(certificate, description, path=true)
-      params = {:description => description}
-      params[:certificate] = path ? File.read(File.expand_path(certificate)) : certificate
-      response = nexus.post(nexus_url("service/local/smartproxy/trusted-keys"), :body => create_add_trusted_key_json(params), :header => DEFAULT_CONTENT_TYPE_HEADER)
-      case response.status
-      when 201
-        return true
-      else
-        raise UnexpectedStatusCodeException.new(response.status)
-      end
-    end
-
-    def delete_trusted_key(key_id)
-      response = nexus.delete(nexus_url("service/local/smartproxy/trusted-keys/#{key_id}"))
-      case response.status
-      when 204
-        return true
-      else
-        raise UnexpectedStatusCodeException.new(response.status)
-      end
-    end
-
-    def get_trusted_keys
-      response = nexus.get(nexus_url("service/local/smartproxy/trusted-keys"), :header => DEFAULT_ACCEPT_HEADER)
-      case response.status
-      when 200
-        return response.content
-      else
-        raise UnexpectedStatusCodeException.new(response.status)
-      end
-    end
-
-    def get_license_info
-      response = nexus.get(nexus_url("service/local/licensing"), :header => DEFAULT_ACCEPT_HEADER)
-      case response.status
-      when 200
-        return response.content
-      else
-        raise UnexpectedStatusCodeException.new(response.status)
-      end
-    end
-
-    def install_license(license_file)
-      file = File.read(File.expand_path(license_file))
-      response = nexus.post(nexus_url("service/local/licensing/upload"), :body => file, :header => {"Content-Type" => "application/octet-stream"})
-      case response.status
-      when 201
-        return true
-      when 403
-        raise LicenseInstallFailure
-      else
-        raise UnexpectedStatusCodeException.new(response.status)
-      end
-    end
-
-    def install_license_bytes(bytes)
-      response = nexus.post(nexus_url("service/local/licensing/upload"), :body => bytes, :header => {"Content-Type" => "application/octet-stream"})
-      case response.status
-      when 201
-        return true
-      when 403
-        raise LicenseInstallFailure
-      else
-        raise UnexpectedStatusCodeException.new(response.status)
-      end
-    end
-
-    def transfer_artifact(artifact, from_repository, to_repository)
-      do_transfer_artifact(artifact, from_repository, to_repository)
-      
-      configuration["repository"] = sanitize_for_id(from_repository)
-      from_artifact_metadata = get_custom_metadata_hash(artifact)
-
-      configuration["repository"] = sanitize_for_id(to_repository)
-      to_artifact_metadata = get_custom_metadata_hash(artifact)
-
-      do_update_custom_metadata(artifact, from_artifact_metadata, to_artifact_metadata)
-    end
-
     private
 
     def get_custom_metadata_hash(artifact)
@@ -283,19 +101,7 @@ module NexusCli
         raise UnexpectedStatusCodeException.new(response.status)
       end
     end
-
-    def create_add_trusted_key_json(params)
-      JSON.dump(:data => params)
-    end
-
-    def create_smart_proxy_settings_json(params)
-      JSON.dump(:data => params)
-    end
-
-    def create_pub_sub_json(params)
-      JSON.dump(:data => params)
-    end
-
+    
     # Converts an array of parameters used to update custom metadata
     # @param [Array] *params The array of key:value strings
     # @return [Hash] The resulting hash of parsed key:value items
