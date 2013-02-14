@@ -44,14 +44,14 @@ module NexusCli
       response = nexus.get(nexus_url("service/local/status"))
       case response.status
       when 200
-        doc = Nokogiri::XML(response.content).xpath("/status/data")
+        doc = REXML::Document.new(response.content).elements["/status/data"]
         data = Hash.new
-        data['app_name'] = doc.xpath("appName")[0].text
-        data['version'] = doc.xpath("version")[0].text
-        data['edition_long'] = doc.xpath("editionLong")[0].text
-        data['state'] = doc.xpath("state")[0].text
-        data['started_at'] = doc.xpath("startedAt")[0].text
-        data['base_url'] = doc.xpath("baseUrl")[0].text
+        data['app_name'] = doc.elements["appName"].text
+        data['version'] = doc.elements["version"].text
+        data['edition_long'] = doc.elements["editionLong"].text
+        data['state'] = doc.elements["state"].text
+        data['started_at'] = doc.elements["startedAt"].text
+        data['base_url'] = doc.elements["baseUrl"].text
         return data
       when 401
         raise PermissionsException

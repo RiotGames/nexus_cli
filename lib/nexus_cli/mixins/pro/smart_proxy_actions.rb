@@ -47,7 +47,7 @@ module NexusCli
     # 
     # @return [Boolean] true if the repository is now subscribing, false otherwise
     def enable_artifact_subscribe(repository_id, preemptive_fetch)
-      raise NotProxyRepositoryException.new(repository_id) unless Nokogiri::XML(get_repository_info(repository_id)).xpath("/repository/data/repoType").first.content == "proxy"
+      raise NotProxyRepositoryException.new(repository_id) unless is_proxy_repository?(get_repository_info(repository_id))
 
       params = {:repositoryId => repository_id}
       params[:subscribe] = true
@@ -61,7 +61,7 @@ module NexusCli
     # 
     # @return [Boolean] true if the repository is disabled, false otherwise
     def disable_artifact_subscribe(repository_id)
-      raise NotProxyRepositoryException.new(repository_id) unless Nokogiri::XML(get_repository_info(repository_id)).xpath("/repository/data/repoType").first.content == "proxy"
+      raise NotProxyRepositoryException.new(repository_id) unless is_proxy_repository?(get_repository_info(repository_id))
 
       params = {:repositoryId => repository_id}
       params[:subscribe] = false
@@ -210,5 +210,10 @@ module NexusCli
         raise UnexpectedStatusCodeException.new(response.status)
       end
     end
+
+    private
+      def is_proxy_repository?(repository_xml)
+        REXML::Document.new(repository_xml).elements["/repository/data/repoType"].text == "proxy"
+      end
   end
 end

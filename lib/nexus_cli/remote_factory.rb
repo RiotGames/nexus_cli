@@ -1,5 +1,4 @@
 require 'httpclient'
-require 'nokogiri'
 require 'yaml'
 
 module NexusCli

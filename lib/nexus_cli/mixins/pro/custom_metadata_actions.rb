@@ -66,7 +66,7 @@ module NexusCli
         response = nexus.get(nexus_url("service/local/search/m2/freeform"), :query => {:p => param[0], :t => param[1], :v => param[2]})
         case response.status
         when 200
-          nodesets.push(Nokogiri::XML(response.body).xpath("/search-results/data"))
+          nodesets.push(REXML::Document.new(response.body).elements["/search-results/data"])
         when 400
           raise BadSearchRequestException
         when 404
@@ -77,7 +77,9 @@ module NexusCli
       end
       # Perform array intersection across all NodeSets for the final common set.
       result = nodesets.inject(nodesets.first) {|memo, nodeset| get_common_artifact_set(memo, nodeset)}
-      return result.nil? ? "" : result.to_xml(:indent => 4)
+      formatter = REXML::Formatters::Pretty.new(4)
+      formatter.compact = true
+      return result.nil? ? "" : formatter.write(result, "")
     end
 
     private
@@ -147,22 +149,27 @@ module NexusCli
     end
 
     # Gets the intersection of two artifact arrays, returning the common set
-    # @param [Array] set1, set2 The two Nokogiri::NodeSet objects to intersect
-    # @result [Nokogiri::NodeSet] The resulting object generated from the array intersect
-    def get_common_artifact_set(set1, set2)
-      intersection = get_artifact_array(set1) & get_artifact_array(set2)
-      return intersection.count > 0 ? Nokogiri::XML("<data>#{intersection.join}</data>").root : Nokogiri::XML("").root
+    #
+    # @param [REXML::Document] left_document, right_document 
+    #   The two REXML::Document objects to intersect
+    #
+    # @result [REXML::Document nil] 
+    #   The resulting object generated from the intersectection or nil
+    def get_common_artifact_set(left_document, right_document)
+      intersection = get_artifact_array(left_document) & get_artifact_array(right_document)
+      return intersection.count > 0 ? REXML::Document.new("<data>#{intersection.join}</data>").root : nil
     end
 
     # Collect <artifact> elements into an array
+    # 
     # @info This will allow use of array intersection to find common artifacts in searches
-    # @param [Nokogiri::NodeSet] set The object to be divided by <artifact> elements
+    # 
+    # @param [REXML::Document] document The object to be divided by <artifact> elements
+    # 
     # @result [Array] The result array of artifact elements
-    def get_artifact_array(set)
-      set.search("//artifact").inject([]) do |artifacts, artifact|
-        artifacts.push(artifact.to_s)
-        artifacts
-      end
+    def get_artifact_array(document)
+      artifacts = []
+      REXML::XPath.each(document, "//artifact") { |matched_artifact| artifacts << matched_artifact.text }
     end
   end
 end

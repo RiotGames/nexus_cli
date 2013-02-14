@@ -14,7 +14,8 @@ module NexusCli
     # @return [Hash] Some information about the artifact that was pulled.
     def pull_artifact(artifact, destination=nil)
       group_id, artifact_id, version, extension = parse_artifact_string(artifact)
-      version = Nokogiri::XML(get_artifact_info(artifact)).xpath("//version").first.content() if version.casecmp("latest")
+      version = REXML::Document.new(get_artifact_info(artifact)).elements["//version"].text if version.casecmp("latest")
+
       file_name = "#{artifact_id}-#{version}.#{extension}"
       destination = File.join(File.expand_path(destination || "."), file_name)
       response = nexus.get(nexus_url("service/local/artifact/maven/redirect"), :query => {:g => group_id, :a => artifact_id, :v => version, :e => extension, :r => configuration['repository']})
@@ -123,7 +124,7 @@ module NexusCli
       response = nexus.get(nexus_url("service/local/data_index"), :query => {:g => group_id, :a => artifact_id})
       case response.status
       when 200
-        doc = Nokogiri::XML(response.content)
+        doc = REXML::Document.new(response.content)
         return format_search_results(doc, group_id, artifact_id)
       else
         raise UnexpectedStatusCodeException.new(response.status)
@@ -139,13 +140,15 @@ module NexusCli
     # Formats the given XML into an [Array<String>] so it
     # can be displayed nicely.
     # 
-    # @param  doc [Nokogiri::XML] the xml search results
+    # @param  doc [REXML::Document] the xml search results
     # @param  group_id [String] the group id
     # @param  artifact_id [String] the artifact id
     # 
     # @return [type] [description]
     def format_search_results(doc, group_id, artifact_id)
-      versions = doc.xpath("//version").inject([]) {|array,node| array << "#{node.content()}"}
+      
+      versions = []
+      REXML::XPath.each(doc, "//version") { |matched_version| versions << matched_version.text }
       if versions.length > 0
         indent_size = versions.max{|a,b| a.length <=> b.length}.size+4
         formated_results = ['Found Versions:']

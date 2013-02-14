@@ -1,7 +1,7 @@
 require 'forwardable'
 require 'httpclient'
 require 'nexus_cli/errors'
-require 'nokogiri'
+require 'rexml/document'
 require 'yaml'
 
 module NexusCli

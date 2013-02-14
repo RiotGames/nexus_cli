@@ -1,4 +1,3 @@
-require 'nokogiri'
 require 'base64'
 
 module NexusCli
@@ -29,19 +28,26 @@ module NexusCli
       # Parses the regular custom metadata xml into a simpler format containing only the custom metadata.
       def convert_result_to_simple_xml(custom_metadata)
         request = []
-        Nokogiri::XML(custom_metadata).root.search("//customMetadataResponse/data/customMetadata[namespace=\"urn:nexus/user#\"]").each do |row|
-          request.push(create_tag(row.at("key").text.strip, row.at("value").text.strip))
+        document = REXML::Document.new(custom_metadata)
+        REXML::XPath.each(document, "//customMetadataResponse/data/customMetadata[namespace=\"urn:nexus/user#\"]") do |row|
+          request.push(create_tag(row.elements["key"].text.strip, row.elements["value"].text.strip))
         end
-        return Nokogiri::XML("<artifact-resolution><data>#{request.join}</data></artifact-resolution>").root.to_xml(:indent => 4)
+        formatter = REXML::Formatters::Pretty.new(4)
+        formatter.compact = true
+        document = REXML::Document.new("<artifact-resolution><data>#{request.join}</data></artifact-resolution>")
+        out = ""
+        formatter.write(document, out)
+        out
       end
 
       # Parses the regular custom metadata xml into a hash containing only the custom metadata.
       def convert_result_to_hash(custom_metadata)
         request = {}
-        Nokogiri::XML(custom_metadata).root.search("//customMetadataResponse/data/customMetadata[namespace=\"urn:nexus/user#\"]").each do |row|
-          request[row.at("key").text.strip] = row.at("value").text.strip
+        document = REXML::Document.new(custom_metadata)
+        REXML::XPath.each(document, "//customMetadataResponse/data/customMetadata[namespace=\"urn:nexus/user#\"]") do |row|
+          request[row.elements["key"].text.strip] = row.elements["value"].text.strip
         end
-        return request
+        request
       end
 
       # Create the request from the specified list of custom metadata key:value pairs
@@ -64,7 +70,7 @@ module NexusCli
       private
 
       def create_tag(tag, value)
-        return "<#{tag}>#{value}</#{tag}>"
+        "<#{tag}>#{value}</#{tag}>"
       end
     end
   end
