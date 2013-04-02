@@ -13,12 +13,12 @@ module NexusCli
     #
     # @return [Hash] Some information about the artifact that was pulled.
     def pull_artifact(artifact, destination=nil)
-      group_id, artifact_id, version, extension = parse_artifact_string(artifact)
+      group_id, artifact_id, version, extension, classifier = parse_artifact_string(artifact)
       version = REXML::Document.new(get_artifact_info(artifact)).elements["//version"].text if version.casecmp("latest")
-
-      file_name = "#{artifact_id}-#{version}.#{extension}"
+      file_name = get_file_name(artifact_id, version, extension, classifier)
+      
       destination = File.join(File.expand_path(destination || "."), file_name)
-      response = nexus.get(nexus_url("service/local/artifact/maven/redirect"), :query => {:g => group_id, :a => artifact_id, :v => version, :e => extension, :r => configuration['repository']})
+      response = nexus.get(nexus_url("service/local/artifact/maven/redirect"), :query => {:g => group_id, :a => artifact_id, :v => version, :e => extension, :c => classifier, :r => configuration['repository']})
       case response.status
       when 301, 307
         # Follow redirect and stream in chunks.
@@ -48,8 +48,8 @@ module NexusCli
     # 
     # @return [Boolean] returns true when successful
     def push_artifact(artifact, file)
-      group_id, artifact_id, version, extension = parse_artifact_string(artifact)
-      file_name = "#{artifact_id}-#{version}.#{extension}"
+      group_id, artifact_id, version, extension, classifier = parse_artifact_string(artifact)
+      file_name = get_file_name(artifact_id, version, extension, classifier)
       put_string = "content/repositories/#{configuration['repository']}/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}/#{file_name}"
       response = nexus.put(nexus_url(put_string), File.open(file))
 
@@ -57,7 +57,7 @@ module NexusCli
       when 201
         pom_name = "#{artifact_id}-#{version}.pom"
         put_string = "content/repositories/#{configuration['repository']}/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}/#{pom_name}"
-        pom_file = generate_fake_pom(pom_name, group_id, artifact_id, version, extension)
+        pom_file = generate_fake_pom(pom_name, group_id, artifact_id, version, extension, classifier)
         nexus.put(nexus_url(put_string), File.open(pom_file))
         delete_string = "/service/local/metadata/repositories/#{configuration['repository']}/content/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}"
         nexus.delete(nexus_url(delete_string))
@@ -94,8 +94,8 @@ module NexusCli
     # 
     # @return [String] A string of XML data about the desired artifact
     def get_artifact_info(artifact)
-      group_id, artifact_id, version, extension = parse_artifact_string(artifact)
-      response = nexus.get(nexus_url("service/local/artifact/maven/resolve"), :query => {:g => group_id, :a => artifact_id, :v => version, :e => extension, :r => configuration['repository']})
+      group_id, artifact_id, version, extension, classifier = parse_artifact_string(artifact)
+      response = nexus.get(nexus_url("service/local/artifact/maven/resolve"), :query => {:g => group_id, :a => artifact_id, :v => version, :e => extension, :c => classifier, :r => configuration['repository']})
       case response.status
       when 200
         return response.content
@@ -178,11 +178,19 @@ module NexusCli
       end
     end
 
-    def generate_fake_pom(pom_name, group_id, artifact_id, version, extension)
+    def generate_fake_pom(pom_name, group_id, artifact_id, version, extension, classifier)
       Tempfile.open(pom_name) do |file|
         template_path = File.join(NexusCli.root, "data", "pom.xml.erb")
         file.puts ERB.new(File.read(template_path)).result(binding)
         file
+      end
+    end
+    
+    def get_file_name(artifact_id, version, extension, classifier)
+      if classifier.nil? || classifier.empty?
+        return "#{artifact_id}-#{version}.#{extension}"
+      else
+        return "#{artifact_id}-#{version}-#{classifier}.#{extension}"
       end
     end
   end

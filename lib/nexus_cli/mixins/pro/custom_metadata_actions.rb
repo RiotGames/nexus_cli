@@ -6,8 +6,9 @@ module NexusCli
     # @param [String] artifact The GAVE string of the artifact
     # @result [String] The resulting custom metadata xml from the get operation
     def get_artifact_custom_info_raw(artifact)
-      group_id, artifact_id, version, extension = parse_artifact_string(artifact)
-      encoded_string = N3Metadata::create_base64_subject(group_id, artifact_id, version, extension)
+      group_id, artifact_id, version, extension, classifier = parse_artifact_string(artifact)
+      encoded_string = N3Metadata::create_base64_subject(group_id, artifact_id, version, extension, classifier)
+      puts encoded_string
       response = nexus.get(nexus_url("service/local/index/custom_metadata/#{configuration['repository']}/#{encoded_string}"))
       case response.status
       when 200

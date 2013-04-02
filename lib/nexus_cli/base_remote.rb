@@ -25,8 +25,12 @@ module NexusCli
         raise ArtifactMalformedException
       end
       group_id, artifact_id, version, extension = split_artifact
+      if extension.include?('@')
+        split_extension = extension.split('@')
+        classifier, extension = split_extension 
+      end
       version.upcase! if version.casecmp("latest")
-      return group_id, artifact_id, version, extension
+      return group_id, artifact_id, version, extension, classifier
     end
   end
 end
