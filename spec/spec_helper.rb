@@ -12,3 +12,11 @@ end
 Spork.each_run do
   require 'nexus_cli'
 end
+
+def app_root_path
+  Pathname.new(File.expand_path('../..', __FILE__))
+end
+
+def fixtures_path
+  app_root_path.join('spec/fixtures')
+end

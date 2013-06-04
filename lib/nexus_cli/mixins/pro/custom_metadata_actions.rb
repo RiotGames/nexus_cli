@@ -166,10 +166,11 @@ module NexusCli
     # 
     # @param [REXML::Document] document The object to be divided by <artifact> elements
     # 
-    # @result [Array] The result array of artifact elements
+    # @result [Array<String>] The result array of artifact elements
     def get_artifact_array(document)
       artifacts = []
       REXML::XPath.each(document, "//artifact") { |matched_artifact| artifacts << matched_artifact.text }
+      artifacts
     end
   end
 end

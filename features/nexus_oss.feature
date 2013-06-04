@@ -24,7 +24,7 @@ Feature: Use the Nexus CLI
     When I call the nexus "pull com.test:mytest:1.0.0:tgz" command
     Then the output should contain:
       """
-      Artifact has been retrived and can be found at path:
+      Artifact has been retrieved and can be found at path:
       """
     And the exit status should be 0
 

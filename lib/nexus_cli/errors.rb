@@ -24,12 +24,12 @@ module NexusCli
   end
 
   class InvalidSettingsException < NexusCliError
-    def initialize(key)
-      @missing_setting = key
+    def initialize(errors)
+      @errors = errors
     end
 
     def message
-      "The .nexus_cli file or your overrides are missing the value: #{@missing_setting}"
+      "Your configuration has an error: #{@errors}"
     end
     status_code(102)
   end

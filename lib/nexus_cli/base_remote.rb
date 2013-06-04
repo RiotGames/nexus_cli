@@ -9,7 +9,7 @@ module NexusCli
     # @param [Hash] overrides
     # @param [Boolean] ssl_verify
     def initialize(overrides, ssl_verify=true)
-      @configuration = Configuration::parse(overrides)
+      @configuration = overrides ? Configuration.from_overrides(overrides) : Configuration.from_file
       @connection = Connection.new(configuration, ssl_verify)
     end
 
