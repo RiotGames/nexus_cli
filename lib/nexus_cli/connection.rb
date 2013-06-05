@@ -1,81 +1,32 @@
 module NexusCli
-  class Connection
-    attr_reader :nexus
-    attr_reader :configuration
-    attr_reader :ssl_verify
+  class Connection < Faraday::Connection
 
-    def initialize(configuration, ssl_verify)
-      @configuration = configuration
-      @ssl_verify = ssl_verify
-      @nexus = setup_nexus(configuration)
-    end
+    NEXUS_REST_ENDPOINT = "service/local".freeze
 
-    # Returns an HTTPClient instance with settings to connect
-    # to a Nexus server.
+    # Creates a new instance of the Connection class
     #
-    # @return [HTTPClient]
-    def setup_nexus(configuration)
-      client = HTTPClient.new
-      client.send_timeout = 6000
-      client.receive_timeout = 6000
-      # https://github.com/nahi/httpclient/issues/63
-      client.set_auth(nil, configuration['username'], configuration['password'])
-      client.www_auth.basic_auth.challenge(configuration['url'])
-      client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE unless ssl_verify
-      
-      client
-    end
+    # @param  server_url [String] the nexus server url
+    # @param  configuration [NexusCli::Configuration] the nexus configuration
+    def initialize(server_url, configuration = Configuration.from_file)
+      options = {}
+      options[:ssl] = {verify: configuration.ssl_verify}
 
-    # Joins a given url to the current url stored in the configuraiton
-    # and returns the combined String.
-    #
-    # @param [String] url
-    #
-    # @return [String]
-    def nexus_url(url)
-      File.join(configuration['url'], url)
-    end
-
-    # Gets that current status of the Nexus server. On a non-error
-    # status code, returns a Hash of values from the server.
-    #
-    # @return [Hash]
-    def status
-      response = nexus.get(nexus_url("service/local/status"))
-      case response.status
-      when 200
-        doc = REXML::Document.new(response.content).elements["/status/data"]
-        data = Hash.new
-        data['app_name'] = doc.elements["appName"].text
-        data['version'] = doc.elements["version"].text
-        data['edition_long'] = doc.elements["editionLong"].text
-        data['state'] = doc.elements["state"].text
-        data['started_at'] = doc.elements["startedAt"].text
-        data['base_url'] = doc.elements["baseUrl"].text
-        return data
-      when 401
-        raise PermissionsException
-      when 503
-        raise CouldNotConnectToNexusException
-      else
-        raise UnexpectedStatusCodeException.new(response.status)
+      options[:builder] = Faraday::Builder.new do |builder|
+        builder.request :json
+        builder.request :url_encoded
+        builder.request :basic_auth, configuration.username, configuration.password
+        builder.response :json
+        builder.adapter :net_http_persistent
       end
-    end
 
-    # Transforms a given [String] into a sanitized version by
-    # replacing spaces with underscores and downcasing.
-    # 
-    # @param  unsanitized_string [String] the String to sanitize
-    # 
-    # @return [String] the sanitized String
-    def sanitize_for_id(unsanitized_string)
-      unsanitized_string.gsub(" ", "_").downcase
-    end
+      server_uri = Addressable::URI.parse(server_url).to_hash
 
-    # Determines whether or not the Nexus server being
-    # connected to is running Nexus Pro.
-    def running_nexus_pro?
-      status['edition_long'] == "Professional"
+      server_uri[:path] = File.join(server_uri[:path], NEXUS_REST_ENDPOINT)
+
+      super(Addressable::URI.new(server_uri), options)
+      @headers[:accept] = 'application/json'
+      @headers[:content_type] = 'application/json'
+      @headers[:user_agent] = "NexusCli v#{NexusCli::VERSION}"
     end
   end
 end

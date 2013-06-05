@@ -121,4 +121,25 @@ describe NexusCli::Configuration do
       expect(config_instance.password).to eq("password")
     end
   end
+
+  describe "#ssl_verify" do
+    it "defaults to true" do
+      expect(config_instance.ssl_verify).to eq(true)
+    end
+
+    context "when ssl_verify is set to false" do
+      let(:valid_config) do
+        {
+          "url" => "http://somewebsite.com",
+          "repository" => "foo",
+          "username" => "admin",
+          "password" => "password",
+          "ssl_verify" => false
+        }
+      end
+      it "returns false" do
+        expect(config_instance.ssl_verify).to eq(false)
+      end
+    end
+  end
 end

@@ -1,5 +1,7 @@
 require 'forwardable'
-require 'httpclient'
+require 'addressable/uri'
+require 'faraday'
+require 'faraday_middleware'
 require 'nexus_cli/errors'
 require 'rexml/document'
 require 'yaml'
