@@ -4,14 +4,14 @@ describe NexusCli::Configuration do
   subject { configuration }
   let(:configuration) { described_class }
   let(:config_instance) { configuration.from_overrides(valid_config) }
-  let(:url) { "http://some-url.com" }
+  let(:server_url) { "http://some-url.com" }
   let(:repository) { "releases" }
   let(:username) { "kallan" }
   let(:password) { "password" }
 
   let(:valid_config) do
     {
-      "url" => "http://somewebsite.com",
+      "server_url" => "http://somewebsite.com",
       "repository" => "foo",
       "username" => "admin",
       "password" => "password"
@@ -70,10 +70,10 @@ describe NexusCli::Configuration do
     subject { validate! }
     let(:validate!) {described_class.validate!(invalid_config)}
     let(:invalid_config) do
-      described_class.new(url: nil, repository: "something", username: "someone", password: "somepass")
+      described_class.new(server_url: nil, repository: "something", username: "someone", password: "somepass")
     end
 
-    context "when the object is invalide" do
+    context "when the object is invalid" do
       it "raises an error" do
         expect { validate! }.to raise_error(NexusCli::InvalidSettingsException)
       end
@@ -82,21 +82,21 @@ describe NexusCli::Configuration do
 
   describe "#new" do
     subject { new_config }
-    let(:new_config) { described_class.new(url: url, repository: repository, username: username, password: password) }
+    let(:new_config) { described_class.new(server_url: server_url, repository: repository, username: username, password: password) }
 
     it "creates a new Configuration object" do
       expect(new_config).to be_a(NexusCli::Configuration)
     end
   end
 
-  describe "#url" do  
-    it "returns the url" do
-      expect(config_instance.url).to eq("http://somewebsite.com")
+  describe "#server_url" do  
+    it "returns the server_url" do
+      expect(config_instance.server_url).to eq("http://somewebsite.com")
     end
   end
 
   describe "#repository" do
-    let(:repository_config) { described_class.new(url: url, repository: repository, username: username, password: password) }
+    let(:repository_config) { described_class.new(server_url: server_url, repository: repository, username: username, password: password) }
 
     it "returns the repository" do
       expect(config_instance.repository).to eq("foo")
@@ -119,6 +119,27 @@ describe NexusCli::Configuration do
   describe "#password" do
     it "returns the password" do
       expect(config_instance.password).to eq("password")
+    end
+  end
+
+  describe "#ssl_verify" do
+    it "defaults to true" do
+      expect(config_instance.ssl_verify).to eq(true)
+    end
+
+    context "when ssl_verify is set to false" do
+      let(:valid_config) do
+        {
+          "server_url" => "http://somewebsite.com",
+          "repository" => "foo",
+          "username" => "admin",
+          "password" => "password",
+          "ssl_verify" => false
+        }
+      end
+      it "returns false" do
+        expect(config_instance.ssl_verify).to eq(false)
+      end
     end
   end
 end

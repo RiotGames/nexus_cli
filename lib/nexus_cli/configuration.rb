@@ -1,8 +1,7 @@
 require 'extlib'
-require 'chozo'
 
 module NexusCli
-  class Configuration
+  class Configuration < Buff::Config::JSON
     DEFAULT_FILE = "~/.nexus_cli".freeze
 
     class << self
@@ -26,7 +25,6 @@ module NexusCli
 
       # Creates a new instance of the Configuration object from the config file
       #
-      #
       # @return [NexusCli::Configuration]
       def from_file
         config = YAML.load_file(file_path)
@@ -49,26 +47,25 @@ module NexusCli
       end
     end
 
-    include Chozo::VariaModel
-
-    attribute :url,
+    attribute :server_url,
       type: String,
       required: true
 
     attribute :repository,
       type: String,
-      required: true,
       coerce: lambda { |m|
         m = m.is_a?(String) ? m.gsub(' ', '_').downcase : m
       }
 
     attribute :username,
-      type: String,
-      required: true
+      type: String
 
     attribute :password,
-      type: String,
-      required: true
+      type: String
+
+    attribute :ssl_verify,
+      type: [ TrueClass, FalseClass ],
+      default: true
 
     def initialize(options)
       mass_assign(options)

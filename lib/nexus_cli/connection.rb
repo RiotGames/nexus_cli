@@ -1,81 +1,87 @@
+require 'open-uri'
+require 'tempfile'
+
 module NexusCli
-  class Connection
-    attr_reader :nexus
-    attr_reader :configuration
-    attr_reader :ssl_verify
+  class Connection < Faraday::Connection
 
-    def initialize(configuration, ssl_verify)
-      @configuration = configuration
-      @ssl_verify = ssl_verify
-      @nexus = setup_nexus(configuration)
-    end
+    include Celluloid
 
-    # Returns an HTTPClient instance with settings to connect
-    # to a Nexus server.
-    #
-    # @return [HTTPClient]
-    def setup_nexus(configuration)
-      client = HTTPClient.new
-      client.send_timeout = 6000
-      client.receive_timeout = 6000
-      # https://github.com/nahi/httpclient/issues/63
-      client.set_auth(nil, configuration['username'], configuration['password'])
-      client.www_auth.basic_auth.challenge(configuration['url'])
-      client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE unless ssl_verify
-      
-      client
-    end
+    NEXUS_REST_ENDPOINT = "service/local/".freeze
 
-    # Joins a given url to the current url stored in the configuraiton
-    # and returns the combined String.
-    #
-    # @param [String] url
-    #
-    # @return [String]
-    def nexus_url(url)
-      File.join(configuration['url'], url)
-    end
+    attr_reader :default_repository
 
-    # Gets that current status of the Nexus server. On a non-error
-    # status code, returns a Hash of values from the server.
+    # Creates a new instance of the Connection class
     #
-    # @return [Hash]
-    def status
-      response = nexus.get(nexus_url("service/local/status"))
-      case response.status
-      when 200
-        doc = REXML::Document.new(response.content).elements["/status/data"]
-        data = Hash.new
-        data['app_name'] = doc.elements["appName"].text
-        data['version'] = doc.elements["version"].text
-        data['edition_long'] = doc.elements["editionLong"].text
-        data['state'] = doc.elements["state"].text
-        data['started_at'] = doc.elements["startedAt"].text
-        data['base_url'] = doc.elements["baseUrl"].text
-        return data
-      when 401
-        raise PermissionsException
-      when 503
-        raise CouldNotConnectToNexusException
-      else
-        raise UnexpectedStatusCodeException.new(response.status)
+    # @param  configuration [NexusCli::Configuration] the nexus configuration
+    def initialize(configuration)
+      options = {}
+      options[:ssl] = {verify: configuration.ssl_verify}
+
+      options[:builder] = Faraday::Builder.new do |builder|
+        builder.request :json
+        builder.request :url_encoded
+        builder.request :basic_auth, configuration.username, configuration.password
+        builder.response :nexus_response
+        builder.response :status_code_handler
+        builder.adapter :net_http_persistent
       end
+
+      server_uri = Addressable::URI.parse(configuration.server_url).to_hash
+
+      server_uri[:path] = server_uri[:path]
+
+      super(Addressable::URI.new(server_uri), options)
+      @headers[:accept] = 'application/json'
+      @headers[:content_type] = 'application/json'
+      @headers[:user_agent] = "NexusCli v#{NexusCli::VERSION}"
+
+      @default_repository = configuration.repository
     end
 
-    # Transforms a given [String] into a sanitized version by
-    # replacing spaces with underscores and downcasing.
-    # 
-    # @param  unsanitized_string [String] the String to sanitize
-    # 
-    # @return [String] the sanitized String
-    def sanitize_for_id(unsanitized_string)
-      unsanitized_string.gsub(" ", "_").downcase
+    def run_request(*args)
+      super
+    rescue Errors::HTTPError => ex
+      abort ex
+    rescue Faraday::Error::ConnectionFailed => ex
+      abort Errors::ConnectionFailed.new(ex)
+    rescue Faraday::Error::TimeoutError => ex
+      abort Errors::TimeoutError.new(ex)
+    rescue Faraday::Error::ClientError => ex
+      abort Errors::ClientError.new(ex)
     end
 
-    # Determines whether or not the Nexus server being
-    # connected to is running Nexus Pro.
-    def running_nexus_pro?
-      status['edition_long'] == "Professional"
+    # Stream the response body of a remote URL to a file on the local file system
+    #
+    # @param [String] target
+    #   a URL to stream the response body from
+    # @param [String] destination
+    #   a location on disk to stream the content of the response body to
+    def stream(target, destination)
+      FileUtils.mkdir_p(File.dirname(destination))
+
+      target  = Addressable::URI.parse(target)
+      headers = {}
+
+      unless ssl[:verify]
+        headers.merge!(ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE)
+      end
+
+      local = Tempfile.new('nexus-stream')
+      local.binmode
+
+      open(target, 'rb', headers) do |remote|
+        until remote.eof?
+          local.write(remote.read(1024))
+        end
+      end
+
+      local.flush
+
+      FileUtils.mv(local.path, destination)
+    rescue OpenURI::HTTPError => ex
+      abort(ex)
+    ensure
+      local.close(true) unless local.nil?
     end
   end
 end

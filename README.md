@@ -22,15 +22,31 @@ password: 		"password"
 
 # Usage
 
-There are two calls that can be made. push\_artifact and pull\_artifact. Both calls will push or pull artifacts from Nexus using the Maven-flavored syntax: `groupId:artifactId:version:extension`
+## API Usage
 
-## Pull Artifact Example
+Can be used as an API...
+
+```
+require 'nexus_cli'
+
+client = NexusCli.new()
+client.artifact.find
+```
+
+## CLI Usage
+
+Can be used as a CLI...
+
+
+# Examples
+
+## CLI - Pull Artifact Example
 
 ```
 nexus-cli pull_artifact com.mycompany.artifacts:myartifact:1.0.0:tgz
 ```
 
-## Push Artifact Example
+## CLI - Push Artifact Example
 
 ```
 nexus-cli push_artifact com.mycompany.artifacts:myartifact:1.0.0:tgz ~/path/to/file/to/push/myartifact.tgz
@@ -40,7 +56,7 @@ nexus-cli push_artifact com.mycompany.artifacts:myartifact:1.0.0:tgz ~/path/to/f
 
 Author:: Kyle Allan (<kallan@riotgames.com>)
 
-Copyright:: 2012 Riot Games Inc.
+Copyright:: 2013 Riot Games Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

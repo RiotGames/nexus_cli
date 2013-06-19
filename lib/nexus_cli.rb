@@ -1,43 +1,31 @@
-require 'forwardable'
-require 'httpclient'
+require 'nexus_cli/core_ext'
 require 'nexus_cli/errors'
+require 'addressable/uri'
+require 'faraday'
+require 'faraday_middleware'
 require 'rexml/document'
 require 'yaml'
+require 'celluloid'
 require 'active_support/core_ext/hash'
+require 'buff/config/json'
 
 module NexusCli
-  DEFAULT_ACCEPT_HEADER = {
-    "Accept" => "application/json"
-  }.freeze
-  
-  DEFAULT_CONTENT_TYPE_HEADER = {
-    "Content-Type" => "application/json"
-  }.freeze
-
-  autoload :Tasks, 'nexus_cli/tasks'
-  autoload :Cli, 'nexus_cli/cli'
-  autoload :Connection, 'nexus_cli/connection'
-  autoload :RemoteFactory, 'nexus_cli/remote_factory'
-  autoload :BaseRemote, 'nexus_cli/base_remote'
-  autoload :OSSRemote, 'nexus_cli/remote/oss_remote'
-  autoload :ProRemote, 'nexus_cli/remote/pro_remote'
-  autoload :Configuration, 'nexus_cli/configuration'
-  autoload :N3Metadata, 'nexus_cli/n3_metadata'
-  autoload :ArtifactActions, 'nexus_cli/mixins/artifact_actions'
-  autoload :GlobalSettingsActions, 'nexus_cli/mixins/global_settings_actions'
-  autoload :UserActions, 'nexus_cli/mixins/user_actions'
-  autoload :RepositoryActions, 'nexus_cli/mixins/repository_actions'
-  autoload :LoggingActions, 'nexus_cli/mixins/logging_actions'
-  autoload :CustomMetadataActions, 'nexus_cli/mixins/pro/custom_metadata_actions'
-  autoload :SmartProxyActions, 'nexus_cli/mixins/pro/smart_proxy_actions'
+  require_relative 'nexus_cli/client'
+  require_relative 'nexus_cli/configuration'
+  require_relative 'nexus_cli/connection'
+  require_relative 'nexus_cli/resource'
+  require_relative 'nexus_cli/resources'
+  require_relative 'nexus_cli/nexus_object'
+  require_relative 'nexus_cli/nexus_objects'
+  require_relative 'nexus_cli/middleware'
 
   class << self
-    def root
-      @root ||= Pathname.new(File.expand_path('../', File.dirname(__FILE__)))
+    def new(options = nil)
+      Client.new(options)
     end
 
-    def ui
-      @ui ||= Thor::Shell::Color.new
+    def root
+      @root ||= Pathname.new(File.expand_path('../', File.dirname(__FILE__)))
     end
   end
 end
