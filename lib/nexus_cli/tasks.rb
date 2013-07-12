@@ -240,6 +240,35 @@ module NexusCli
           end
         end
 
+        method_option :username,
+          :type => :string,
+          :default => nil,
+          :desc => "The mapping username."
+        method_option :realm,
+          :type => :string,
+          :default => nil,
+          :desc => "The mapping realm."
+        method_option :roles,
+          :type => :array,
+          :default => [],
+          :require => false,
+          :desc => "An array of roles."
+        desc "create_role_mapping", "Creates a new user to role mapping"
+        def create_role_mapping
+          params = ask_role_mapping(options)
+
+          if nexus_remote.create_role_mapping(params)
+            say "A user to role mapping with the ID of #{params[:userId]} for realm #{params[:source]} has been created.", :blue
+          end
+        end
+
+        desc "delete_role_mapping realm mapping_id", "Deletes the user to role mapping from defined realm and with the given id."
+        def delete_role_mapping(realm, mapping_id)
+          if nexus_remote.delete_role_mapping(realm, mapping_id)
+            say "User to role mapping #{mapping_id} has been deleted from mapping realm #{realm}.", :blue
+          end
+        end
+
         method_option :oldPassword,
           :type => :string,
           :default => nil,
@@ -490,6 +519,26 @@ module NexusCli
               q.echo = false
             end
           end
+
+        def ask_role_mapping(params, ask_username=true)
+          username = params[:username]
+          source = params[:realm]
+          roles = params[:roles]
+
+          if username.nil? && ask_username
+            username = ask "Please enter the mapping username:"
+          end
+          if source.nil?
+            first_name = ask "Please enter the mapping realm:"
+          end
+          if roles.size == 0
+            roles = ask "Please enter the mapping roles:"
+          end
+          params = {:userId => username}
+          params[:source] = source
+          params[:roles] = roles.kind_of?(Array) ? roles : roles.split(' ')
+          params
+        end
       end
     end
   end
