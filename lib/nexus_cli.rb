@@ -31,6 +31,7 @@ module NexusCli
   autoload :CustomMetadataActions, 'nexus_cli/mixins/pro/custom_metadata_actions'
   autoload :SmartProxyActions, 'nexus_cli/mixins/pro/smart_proxy_actions'
   autoload :RoleMappingActions, 'nexus_cli/mixins/role_mapping_actions'
+  autoload :LdapActions, 'nexus_cli/mixins/ldap_actions'
 
   class << self
     def root

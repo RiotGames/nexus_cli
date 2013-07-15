@@ -8,5 +8,6 @@ module NexusCli
     include RepositoryActions
     include UserActions
     include RoleMappingActions
+    include LdapActions
   end
 end

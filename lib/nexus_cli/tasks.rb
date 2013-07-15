@@ -253,7 +253,7 @@ module NexusCli
           :default => [],
           :require => false,
           :desc => "An array of roles."
-        desc "create_role_mapping", "Creates a new user to role mapping"
+        desc "create_role_mapping", "Creates a new user to role mapping."
         def create_role_mapping
           params = ask_role_mapping(options)
 
@@ -266,6 +266,112 @@ module NexusCli
         def delete_role_mapping(realm, mapping_id)
           if nexus_remote.delete_role_mapping(realm, mapping_id)
             say "User to role mapping #{mapping_id} has been deleted from mapping realm #{realm}.", :blue
+          end
+        end
+
+        method_option :search_base,
+          :type => :string,
+          :default => nil,
+          :desc => "The LDAP search base."
+        method_option :auth_scheme,
+          :type => :string,
+          :default => 'none',
+          :require => false,
+          :desc => "The LDAP authentication scheme."
+        method_option :protocol,
+          :type => :string,
+          :default => 'ldap',
+          :require => false,
+          :desc => "The LDAP protocol."
+        method_option :port,
+          :type => :numeric,
+          :default => 389,
+          :require => false,
+          :desc => "The LDAP server port."
+        method_option :host,
+          :type => :string,
+          :default => nil,
+          :desc => "The LDAP server host name."
+        desc "set_ldap_connection_info", "Sets LDAP connection information."
+        def set_ldap_connection_info
+          params = ask_ldap_conn_info(options)
+
+          if nexus_remote.set_ldap_connection_info(params)
+            say "A LDAP connection information has been updated.", :blue
+          end
+        end
+
+        method_option :email_address_attribute,
+          :type => :string,
+          :default => 'mail',
+          :require => false,
+          :desc => "The LDAP email address attribute."
+        method_option :ldap_groups_as_roles,
+          :type => :boolean,
+          :default => true,
+          :require => false,
+          :desc => "Treat LDAP groups as roles."
+        method_option :group_base_dn,
+          :type => :string,
+          :default => 'ou=Groups',
+          :require => false,
+          :desc => "The LDAP group base distinguished name."
+        method_option :group_id_attribute,
+          :type => :string,
+          :default => 'cn',
+          :require => false,
+          :desc => "The LDAP group id attribute."
+        method_option :group_member_attribute,
+          :type => :string,
+          :default => 'uniqueMember',
+          :require => false,
+          :desc => "The LDAP group member attribute."
+        method_option :group_member_format,
+          :type => :string,
+          :default => '${username}',
+          :require => false,
+          :desc => "The LDAP group member format."
+        method_option :group_object_class,
+          :type => :string,
+          :default => 'groupOfUniqueNames',
+          :require => false,
+          :desc => "The LDAP group object class name."
+        method_option :user_id_attribute,
+          :type => :string,
+          :default => 'uid',
+          :require => false,
+          :desc => "The LDAP user id attribute."
+        method_option :user_object_class,
+          :type => :string,
+          :default => 'inetOrgPerson',
+          :require => false,
+          :desc => "The LDAP user object class name."
+        method_option :user_base_dn,
+          :type => :string,
+          :default => 'ou=People',
+          :require => false,
+          :desc => "The LDAP user base distinguished name."
+        method_option :user_real_name_attribute,
+          :type => :string,
+          :default => 'cn',
+          :require => false,
+          :desc => "The LDAP user real name attribute."
+        method_option :user_subtree,
+          :type => :boolean,
+          :default => false,
+          :require => false,
+          :desc => "Look for LDAP users in the subtree."
+        method_option :group_subtree,
+          :type => :boolean,
+          :default => false,
+          :require => false,
+          :desc => "Look for LDAP groups in the subtree."
+        desc "set_ldap_user_group_configuration", "Sets LDAP user and group configuration."
+        def set_ldap_user_group_configuration
+          params = ask_ldap_user_group_conf(options)
+
+          if nexus_remote.set_ldap_user_group_configuration(params)
+            say "A LDAP user and group configuration has been updated.", :blue
           end
         end
 
@@ -537,6 +643,60 @@ module NexusCli
           params = {:userId => username}
           params[:source] = source
           params[:roles] = roles.kind_of?(Array) ? roles : roles.split(' ')
+          params
+        end
+
+        def ask_ldap_conn_info(params, ask_host=true, ask_search_base=true)
+          search_base = params[:search_base]
+          auth_scheme = params[:auth_scheme]
+          protocol = params[:protocol]
+          host = params[:host]
+          port = params[:port]
+
+          if host.nil? && ask_host
+            host = ask "Please enter the LDAP server host name:"
+          end
+
+          if search_base.nil? && ask_search_base
+            search_base = ask "Please enter the LDAP search base:"
+          end
+
+          params = {:host => host}
+          params[:searchBase] = search_base
+          params[:authScheme] = auth_scheme unless auth_scheme.nil?
+          params[:protocol] = protocol unless protocol.nil?
+          params[:port] = port unless port.nil?
+          params
+        end
+
+        def ask_ldap_user_group_conf(params)
+          email_address_attribute = params[:email_address_attribute]
+          ldap_groups_as_roles = params[:ldap_groups_as_roles]
+          group_base_dn = params[:group_base_dn]
+          group_id_attribute = params[:group_id_attribute]
+          group_member_attribute = params[:group_member_attribute]
+          group_member_format = params[:group_member_format]
+          group_object_class = params[:group_object_class]
+          user_id_attribute = params[:user_id_attribute]
+          user_object_class = params[:user_object_class]
+          user_base_dn = params[:user_base_dn]
+          user_real_name_attribute = params[:user_real_name_attribute]
+          user_subtree = params[:user_subtree]
+          group_subtree = params[:group_subtree]
+
+          params = {:emailAddressAttribute => email_address_attribute}
+          params[:ldapGroupsAsRoles] = ldap_groups_as_roles
+          params[:groupBaseDn] = group_base_dn
+          params[:groupIdAttribute] = group_id_attribute
+          params[:groupMemberAttribute] = group_member_attribute
+          params[:groupMemberFormat] = group_member_format
+          params[:groupObjectClass] = group_object_class
+          params[:userIdAttribute] = user_id_attribute
+          params[:userObjectClass] = user_object_class
+          params[:userBaseDn] = user_base_dn
+          params[:userRealNameAttribute] = user_real_name_attribute
+          params[:userSubtree] = user_subtree
+          params[:groupSubtree] = group_subtree
           params
         end
       end
