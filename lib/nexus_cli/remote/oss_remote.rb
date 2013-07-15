@@ -7,5 +7,7 @@ module NexusCli
     include LoggingActions
     include RepositoryActions
     include UserActions
+    include RoleMappingActions
+    include LdapActions
   end
 end
