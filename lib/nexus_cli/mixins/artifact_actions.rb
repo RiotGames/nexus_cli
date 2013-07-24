@@ -5,20 +5,22 @@ module NexusCli
   # @author Kyle Allan <kallan@riotgames.com>
   module ArtifactActions
     
-    # Retrieves a file from the Nexus server using the given [String] artifact
-    # identifier. Optionally provide a destination [String].
+    # Retrieves a file from the Nexus server using the given [String] 
+    # coordinates. Optionally provide a destination [String].
     #
-    # @param [String] artifact
+    # @param [String] coordinates
     # @param [String] destination
     #
     # @return [Hash] Some information about the artifact that was pulled.
-    def pull_artifact(artifact, destination=nil)
-      group_id, artifact_id, version, extension = parse_artifact_string(artifact)
-      version = REXML::Document.new(get_artifact_info(artifact)).elements["//version"].text if version.casecmp("latest")
+    def pull_artifact(coordinates, destination=nil)
+      artifact = Artifact.new(coordinates)
+      version = REXML::Document.new(get_artifact_info(coordinates)).elements["//version"].text if artifact.version.casecmp("latest")
 
-      file_name = "#{artifact_id}-#{version}.#{extension}"
+      file_name = artifact.file_name
       destination = File.join(File.expand_path(destination || "."), file_name)
-      response = nexus.get(nexus_url("service/local/artifact/maven/redirect"), :query => {:g => group_id, :a => artifact_id, :v => version, :e => extension, :r => configuration['repository']})
+      query = {:g => artifact.group_id, :a => artifact.artifact_id, :e => artifact.extension, :v => artifact.version, :r => configuration['repository']}
+      query.merge!({:c => artifact.classifier}) unless artifact.classifier.nil?
+      response = nexus.get(nexus_url("service/local/artifact/maven/redirect"), :query => query)
       case response.status
       when 301, 307
         # Follow redirect and stream in chunks.
@@ -43,23 +45,22 @@ module NexusCli
     # Pushes the given [file] to the Nexus server
     # under the given [artifact] identifier.
     # 
-    # @param  artifact [String] the Maven identifier
+    # @param  coordinates [String] the Maven identifier
     # @param  file [type] the path to the file
     # 
     # @return [Boolean] returns true when successful
-    def push_artifact(artifact, file)
-      group_id, artifact_id, version, extension = parse_artifact_string(artifact)
-      file_name = "#{artifact_id}-#{version}.#{extension}"
-      put_string = "content/repositories/#{configuration['repository']}/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}/#{file_name}"
+    def push_artifact(coordinates, file)
+      artifact = Artifact.new(coordinates)
+      put_string = "content/repositories/#{configuration['repository']}/#{artifact.group_id.gsub(".", "/")}/#{artifact.artifact_id.gsub(".", "/")}/#{artifact.version}/#{artifact.file_name}"
       response = nexus.put(nexus_url(put_string), File.open(file))
 
       case response.status
       when 201
-        pom_name = "#{artifact_id}-#{version}.pom"
-        put_string = "content/repositories/#{configuration['repository']}/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}/#{pom_name}"
-        pom_file = generate_fake_pom(pom_name, group_id, artifact_id, version, extension)
+        pom_name = "#{artifact.artifact_id}-#{artifact.version}.pom"
+        put_string = "content/repositories/#{configuration['repository']}/#{artifact.group_id.gsub(".", "/")}/#{artifact.artifact_id.gsub(".", "/")}/#{artifact.version}/#{pom_name}"
+        pom_file = generate_fake_pom(pom_name, artifact)
         nexus.put(nexus_url(put_string), File.open(pom_file))
-        delete_string = "/service/local/metadata/repositories/#{configuration['repository']}/content/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}"
+        delete_string = "/service/local/metadata/repositories/#{configuration['repository']}/content/#{artifact.group_id.gsub(".", "/")}/#{artifact.artifact_id.gsub(".", "/")}"
         nexus.delete(nexus_url(delete_string))
         return true
       when 400
@@ -75,9 +76,9 @@ module NexusCli
       end
     end
 
-    def delete_artifact(artifact)
-      group_id, artifact_id, version = parse_artifact_string(artifact)
-      response = nexus.delete(nexus_url("content/repositories/#{configuration['repository']}/#{group_id.gsub(".", "/")}/#{artifact_id.gsub(".", "/")}/#{version}"))
+    def delete_artifact(coordinates)
+      artifact = Artifact.new(coordinates)
+      response = nexus.delete(nexus_url("content/repositories/#{configuration['repository']}/#{artifact.group_id.gsub(".", "/")}/#{artifact.artifact_id.gsub(".", "/")}/#{artifact.version}"))
       case response.status
       when 204
         return true
@@ -90,12 +91,14 @@ module NexusCli
     # Retrieves information about the given [artifact] and returns
     # it in as a [String] of XML.
     # 
-    # @param  artifact [String] the Maven identifier
+    # @param  coordinates [String] the Maven identifier
     # 
     # @return [String] A string of XML data about the desired artifact
-    def get_artifact_info(artifact)
-      group_id, artifact_id, version, extension = parse_artifact_string(artifact)
-      response = nexus.get(nexus_url("service/local/artifact/maven/resolve"), :query => {:g => group_id, :a => artifact_id, :v => version, :e => extension, :r => configuration['repository']})
+    def get_artifact_info(coordinates)
+      artifact = Artifact.new(coordinates)
+      query = {:g => artifact.group_id, :a => artifact.artifact_id, :e => artifact.extension, :v => artifact.version, :r => configuration['repository']}
+      query.merge!({:c => artifact.classifier}) unless artifact.classifier.nil?
+      response = nexus.get(nexus_url("service/local/artifact/maven/resolve"), query)
       case response.status
       when 200
         return response.content
@@ -111,16 +114,16 @@ module NexusCli
 
     # Searches for an artifact using the given identifier.
     #
-    # @param  artifact [String] the Maven identifier
+    # @param  coordinates [String] the Maven identifier
     # @example com.artifact:my-artifact
     # 
     # @return [Array<String>] a formatted Array of results
     # @example 
-    #   1.0.0     `nexus-cli pull com.artifact:my-artifact:1.0.0:tgz`
-    #   2.0.0     `nexus-cli pull com.artifact:my-artifact:2.0.0:tgz`
-    #   3.0.0     `nexus-cli pull com.artifact:my-artifact:3.0.0:tgz`
-    def search_for_artifacts(artifact)
-      group_id, artifact_id = artifact.split(":")
+    #   1.0.0     `nexus-cli pull com.artifact:my-artifact:tgz:1.0.0`
+    #   2.0.0     `nexus-cli pull com.artifact:my-artifact:tgz:2.0.0`
+    #   3.0.0     `nexus-cli pull com.artifact:my-artifact:tgz:3.0.0`
+    def search_for_artifacts(coordinates)
+      group_id, artifact_id = coordinates.split(":")
       response = nexus.get(nexus_url("service/local/data_index"), :query => {:g => group_id, :a => artifact_id})
       case response.status
       when 200
@@ -131,8 +134,8 @@ module NexusCli
       end
     end
 
-    def transfer_artifact(artifact, from_repository, to_repository)
-      do_transfer_artifact(artifact, from_repository, to_repository)
+    def transfer_artifact(coordinates, from_repository, to_repository)
+      do_transfer_artifact(coordinates, from_repository, to_repository)
     end
 
     private
@@ -164,21 +167,21 @@ module NexusCli
     # Transfers an artifact from one repository
     # to another. Sometimes called a `promotion`
     # 
-    # @param  artifact [String] a Maven identifier
+    # @param  coordinates [String] a Maven identifier
     # @param  from_repository [String] the name of the from repository
     # @param  to_repository [String] the name of the to repository
     # 
     # @return [Boolean] returns true when successful
-    def do_transfer_artifact(artifact, from_repository, to_repository)
+    def do_transfer_artifact(coordinates, from_repository, to_repository)
       Dir.mktmpdir do |temp_dir|
         configuration["repository"] = sanitize_for_id(from_repository)
-        artifact_file = pull_artifact(artifact, temp_dir)
+        artifact_file = pull_artifact(coordinates, temp_dir)
         configuration["repository"] = sanitize_for_id(to_repository)
-        push_artifact(artifact, artifact_file[:file_path])
+        push_artifact(coordinates, artifact_file[:file_path])
       end
     end
 
-    def generate_fake_pom(pom_name, group_id, artifact_id, version, extension)
+    def generate_fake_pom(pom_name, artifact)
       Tempfile.open(pom_name) do |file|
         template_path = File.join(NexusCli.root, "data", "pom.xml.erb")
         file.puts ERB.new(File.read(template_path)).result(binding)

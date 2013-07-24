@@ -31,46 +31,46 @@ module NexusCli
           :type => :string,
           :default => nil,
           :desc => "A different folder other than the current working directory."
-        desc "pull_artifact artifact", "Pulls an artifact from Nexus and places it on your machine."
-        def pull_artifact(artifact)
-          pull_artifact_response = nexus_remote.pull_artifact(artifact, options[:destination])
+        desc "pull_artifact coordinates", "Pulls an artifact from Nexus and places it on your machine."
+        def pull_artifact(coordinates)
+          pull_artifact_response = nexus_remote.pull_artifact(coordinates, options[:destination])
           say "Artifact has been retrieved and can be found at path: #{pull_artifact_response[:file_path]}", :green
         end
 
-        desc "push_artifact artifact file", "Pushes an artifact from your machine onto the Nexus."
-        def push_artifact(artifact, file)
-          nexus_remote.push_artifact(artifact, file)
-          say "Artifact #{artifact} has been successfully pushed to Nexus.", :green
+        desc "push_artifact coordinates file", "Pushes an artifact from your machine onto the Nexus."
+        def push_artifact(coordinates, file)
+          nexus_remote.push_artifact(coordinates, file)
+          say "Artifact #{coordinates} has been successfully pushed to Nexus.", :green
         end
 
-        desc "get_artifact_info artifact", "Gets and returns the metadata in XML format about a particular artifact."
-        def get_artifact_info(artifact)
-          say nexus_remote.get_artifact_info(artifact), :green
+        desc "get_artifact_info coordinates", "Gets and returns the metadata in XML format about a particular artifact."
+        def get_artifact_info(coordinates)
+          say nexus_remote.get_artifact_info(coordinates), :green
         end
 
         desc "search_for_artifacts", "Searches for all the versions of a particular artifact and prints it to the screen."
-        def search_for_artifacts(artifact)
-          nexus_remote.search_for_artifacts(artifact).each{|output| say output, :green}
+        def search_for_artifacts(coordinates)
+          nexus_remote.search_for_artifacts(coordinates).each{|output| say output, :green}
         end
 
-        desc "get_artifact_custom_info artifact", "Gets and returns the custom metadata in XML format about a particular artifact."
-        def get_artifact_custom_info(artifact)
+        desc "get_artifact_custom_info coordinates", "Gets and returns the custom metadata in XML format about a particular artifact."
+        def get_artifact_custom_info(coordinates)
           raise NotNexusProException unless nexus_remote.kind_of? ProRemote
-          say nexus_remote.get_artifact_custom_info(artifact), :green
+          say nexus_remote.get_artifact_custom_info(coordinates), :green
         end
 
-        desc "update_artifact_custom_info artifact param1 param2 ...", "Updates the artifact custom metadata with the given key-value pairs."
-        def update_artifact_custom_info(artifact, *params)
+        desc "update_artifact_custom_info coordinates param1 param2 ...", "Updates the artifact custom metadata with the given key-value pairs."
+        def update_artifact_custom_info(coordinates, *params)
           raise NotNexusProException unless nexus_remote.kind_of? ProRemote
-          nexus_remote.update_artifact_custom_info(artifact, *params)
-          say "Custom metadata for artifact #{artifact} has been successfully pushed to Nexus.", :green
+          nexus_remote.update_artifact_custom_info(coordinates, *params)
+          say "Custom metadata for artifact #{coordinates} has been successfully pushed to Nexus.", :green
         end
 
-        desc "clear_artifact_custom_info artifact", "Clears the artifact custom metadata."
-        def clear_artifact_custom_info(artifact)
+        desc "clear_artifact_custom_info coordinates", "Clears the artifact custom metadata."
+        def clear_artifact_custom_info(coordinates)
           raise NotNexusProException unless nexus_remote.kind_of? ProRemote
-          nexus_remote.clear_artifact_custom_info(artifact)
-          say "Custom metadata for artifact #{artifact} has been successfully cleared.", :green
+          nexus_remote.clear_artifact_custom_info(coordinates)
+          say "Custom metadata for artifact #{coordinates} has been successfully cleared.", :green
         end
 
         desc "search_artifacts_custom param1 param2 ... ", "Searches for artifacts using artifact metadata and returns the result as a list with items in XML format."
@@ -426,10 +426,10 @@ module NexusCli
           end
         end
 
-        desc "transfer_artifact artifact from_repository to_repository", "Transfers a given artifact from one repository to another."
-        def transfer_artifact(artifact, from_repository, to_repository)
-          if nexus_remote.transfer_artifact(artifact, from_repository, to_repository)
-            say "The artifact #{artifact} has been transferred from #{from_repository} to #{to_repository}.", :blue
+        desc "transfer_artifact coordinates from_repository to_repository", "Transfers a given artifact from one repository to another."
+        def transfer_artifact(coordinates, from_repository, to_repository)
+          if nexus_remote.transfer_artifact(coordinates, from_repository, to_repository)
+            say "The artifact #{coordinates} has been transferred from #{from_repository} to #{to_repository}.", :blue
           end
         end
 

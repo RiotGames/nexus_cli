@@ -11,25 +11,25 @@ describe NexusCli::ProRemote do
   end
 
   it "gives you errors when you attempt to get an artifact's custom info and don't give a valid artifact name" do
-    expect {remote.get_artifact_custom_info("com.something:something:1.0.0")}.to raise_error(NexusCli::ArtifactMalformedException)
+    expect {remote.get_artifact_custom_info("com.something:something")}.to raise_error(NexusCli::ArtifactMalformedException)
   end
 
   it "gives you errors when you attempt to get an artifact's custom info and it cannot be found" do
     HTTPClient.any_instance.stub(:get).and_raise(NexusCli::ArtifactNotFoundException)
-    expect {remote.get_artifact_custom_info("com.something:something:1.0.0:tgz")}.to raise_error(NexusCli::ArtifactNotFoundException)
+    expect {remote.get_artifact_custom_info("com.something:something:tgz:1.0.0")}.to raise_error(NexusCli::ArtifactNotFoundException)
   end
 
   it "gives you errors when you attempt to update an artifact's custom info and don't give valid parameters" do
-    expect {remote.update_artifact_custom_info("com.something:something:1.0.0:tgz", "_somebadkey:_somebadvalue")}.to raise_error(NexusCli::N3ParameterMalformedException)
+    expect {remote.update_artifact_custom_info("com.something:something:tgz:1.0.0", "_somebadkey:_somebadvalue")}.to raise_error(NexusCli::N3ParameterMalformedException)
   end
 
   it "gives you errors when you attempt to update an artifact's custom info and don't give valid parameters" do
-    expect {remote.update_artifact_custom_info("com.something:something:1.0.0:tgz", "_somebadkey")}.to raise_error(NexusCli::N3ParameterMalformedException)
+    expect {remote.update_artifact_custom_info("com.something:something:tgz:1.0.0", "_somebadkey")}.to raise_error(NexusCli::N3ParameterMalformedException)
   end
 
   it "gives you errors when you attempt to clear an artifact's custom info and it cannot be found" do
     HTTPClient.any_instance.stub(:get).and_raise(NexusCli::ArtifactNotFoundException)
-    expect {remote.clear_artifact_custom_info("com.something:something:1.0.0:tgz")}.to raise_error(NexusCli::ArtifactNotFoundException)
+    expect {remote.clear_artifact_custom_info("com.something:something:tgz:1.0.0")}.to raise_error(NexusCli::ArtifactNotFoundException)
   end
 
   it "gives you errors when you attempt to search for artifacts using custom info and don't give valid key" do

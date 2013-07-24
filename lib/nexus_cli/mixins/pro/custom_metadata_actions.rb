@@ -3,11 +3,11 @@ module NexusCli
   module CustomMetadataActions
 
     # Gets the custom metadata for an artifact
-    # @param [String] artifact The GAVE string of the artifact
+    # @param [String] coordinates The GAVE string of the artifact
     # @result [String] The resulting custom metadata xml from the get operation
-    def get_artifact_custom_info_raw(artifact)
-      group_id, artifact_id, version, extension = parse_artifact_string(artifact)
-      encoded_string = N3Metadata::create_base64_subject(group_id, artifact_id, version, extension)
+    def get_artifact_custom_info_raw(coordinates)
+      artifact = Artifact.new(coordinates)
+      encoded_string = N3Metadata::create_base64_subject(artifact)
       response = nexus.get(nexus_url("service/local/index/custom_metadata/#{configuration['repository']}/#{encoded_string}"))
       case response.status
       when 200
@@ -24,30 +24,30 @@ module NexusCli
     end
 
     # Gets the custom metadata for an artifact in a simplified XML format
-    # @param [String] artifact The GAVE string of the artifact
+    # @param [String] coordinates The GAVE string of the artifact
     # @result [String] The resulting custom metadata xml from the get operation
-    def get_artifact_custom_info(artifact)
-      N3Metadata::convert_result_to_simple_xml(get_artifact_custom_info_raw(artifact))
+    def get_artifact_custom_info(coordinates)
+      N3Metadata::convert_result_to_simple_xml(get_artifact_custom_info_raw(coordinates))
     end
 
     # Updates custom metadata for an artifact
-    # @param [String] artifact The GAVE string of the artifact
+    # @param [String] coordinates The GAVE string of the artifact
     # @param [Array] *params The array of key:value strings
     # @result [Integer] The resulting exit code of the operation
-    def update_artifact_custom_info(artifact, *params)
+    def update_artifact_custom_info(coordinates, *params)
       target_n3 = parse_custom_metadata_update_params(*params)
-      nexus_n3 = get_custom_metadata_hash(artifact)
+      nexus_n3 = get_custom_metadata_hash(coordinates)
 
-      do_update_custom_metadata(artifact, nexus_n3, target_n3)
+      do_update_custom_metadata(coordinates, nexus_n3, target_n3)
     end
 
     # Clears all custom metadata from an artifact
     # @param [String] The GAVE string of the artifact
     # @result [Integer] The resulting exit code of the operation
-    def clear_artifact_custom_info(artifact)
-      get_artifact_custom_info(artifact) # Check that artifact has custom metadata
-      group_id, artifact_id, version, extension = parse_artifact_string(artifact)
-      encoded_string = N3Metadata::create_base64_subject(group_id, artifact_id, version, extension)
+    def clear_artifact_custom_info(coordinates)
+      get_artifact_custom_info(coordinates) # Check that artifact has custom metadata
+      artifact = Artifact.new(coordinates)
+      encoded_string = N3Metadata::create_base64_subject(artifact)
       response = nexus.post(nexus_url("service/local/index/custom_metadata/#{configuration['repository']}/#{encoded_string}"), :body => create_custom_metadata_clear_json, :header => DEFAULT_CONTENT_TYPE_HEADER)
       case response.status
       when 201
@@ -84,17 +84,17 @@ module NexusCli
 
     private
 
-    def get_custom_metadata_hash(artifact)
+    def get_custom_metadata_hash(coordinates)
       begin
-        N3Metadata::convert_result_to_hash(get_artifact_custom_info_raw(artifact))
+        N3Metadata::convert_result_to_hash(get_artifact_custom_info_raw(coordinates))
       rescue N3NotFoundException
         Hash.new
       end
     end
 
-    def do_update_custom_metadata(artifact, source_metadata, target_metadata)
-      group_id, artifact_id, version, extension = parse_artifact_string(artifact)
-      encoded_string = N3Metadata::create_base64_subject(group_id, artifact_id, version, extension)
+    def do_update_custom_metadata(coordinates, source_metadata, target_metadata)
+      artifact = Artifact.new(coordinates)
+      encoded_string = N3Metadata::create_base64_subject(artifact)
       response = nexus.post(nexus_url("service/local/index/custom_metadata/#{configuration['repository']}/#{encoded_string}"), :body => create_custom_metadata_update_json(source_metadata, target_metadata), :header => DEFAULT_CONTENT_TYPE_HEADER)
       case response.code
       when 201

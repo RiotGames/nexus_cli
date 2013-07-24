@@ -14,6 +14,7 @@ module NexusCli
     "Content-Type" => "application/json"
   }.freeze
 
+  autoload :Artifact, 'nexus_cli/artifact'
   autoload :Tasks, 'nexus_cli/tasks'
   autoload :Cli, 'nexus_cli/cli'
   autoload :Connection, 'nexus_cli/connection'

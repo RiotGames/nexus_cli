@@ -12,16 +12,16 @@ Feature: Use the Nexus CLI
 
   @push
   Scenario: Push an Artifact
-    When I push an artifact with the GAV of "com.test:mytest:1.0.0:tgz"
+    When I push an artifact with the GAV of "com.test:mytest:tgz:1.0.0"
     Then the output should contain:
       """
-      Artifact com.test:mytest:1.0.0:tgz has been successfully pushed to Nexus.
+      Artifact com.test:mytest:tgz:1.0.0 has been successfully pushed to Nexus.
       """
     And the exit status should be 0
   
   @pull
   Scenario: Pull an artifact
-    When I call the nexus "pull com.test:mytest:1.0.0:tgz" command
+    When I call the nexus "pull com.test:mytest:tgz:1.0.0" command
     Then the output should contain:
       """
       Artifact has been retrieved and can be found at path:
@@ -29,17 +29,17 @@ Feature: Use the Nexus CLI
     And the exit status should be 0
 
   Scenario: Pull the LATEST of an artifact
-    When I pull an artifact with the GAV of "com.test:mytest:latest:tgz" to a temp directory
+    When I pull an artifact with the GAV of "com.test:mytest:tgz:latest" to a temp directory
     Then I should have a copy of the "mytest-1.0.0.tgz" artifact in a temp directory
     And the exit status should be 0
   
   Scenario: Pull an artifact to a specific place
-    When I pull an artifact with the GAV of "com.test:mytest:1.0.0:tgz" to a temp directory
+    When I pull an artifact with the GAV of "com.test:mytest:tgz:1.0.0" to a temp directory
     Then I should have a copy of the "mytest-1.0.0.tgz" artifact in a temp directory
     And the exit status should be 0
 
   Scenario: Get an artifact's info
-    When I call the nexus "info com.test:mytest:1.0.0:tgz" command
+    When I call the nexus "info com.test:mytest:tgz:1.0.0" command
     Then the output should contain:
       """
       <groupId>com.test</groupId>
@@ -51,23 +51,23 @@ Feature: Use the Nexus CLI
     Then the output should contain:
       """
       Found Versions:
-      1.0.0:    `nexus-cli pull com.test:mytest:1.0.0:tgz`
+      1.0.0:    `nexus-cli pull com.test:mytest:tgz:1.0.0`
       """
     And the exit status should be 0
 
   @transfer
   Scenario: Transfer an artifact between repositories
-    When I call the nexus "transfer com.test:mytest:1.0.0:tgz releases thirdparty" command
+    When I call the nexus "transfer com.test:mytest:tgz:1.0.0 releases thirdparty" command
     Then the output should contain:
       """
-      The artifact com.test:mytest:1.0.0:tgz has been transferred from releases to thirdparty.
+      The artifact com.test:mytest:tgz:1.0.0 has been transferred from releases to thirdparty.
       """
     And the exit status should be 0
 
   @delete
   Scenario: Attempt to delete an artifact
-    When I delete an artifact with the GAV of "com.test:mytest:1.0.0:tgz"
-    And I call the nexus "info com.test:mytest:1.0.0:tgz" command
+    When I delete an artifact with the GAV of "com.test:mytest:tgz:1.0.0"
+    And I call the nexus "info com.test:mytest:tgz:1.0.0" command
     Then the output should contain:
       """
       The artifact you requested information for could not be found. Please ensure it exists inside the Nexus.
@@ -76,8 +76,8 @@ Feature: Use the Nexus CLI
 
   @delete
   Scenario: Attempt to delete another artifact
-    When I delete an artifact with the GAV of "com.test:mytest:1.0.0:tgz" from the "thirdparty" repository
-    And I call the nexus "info com.test:mytest:1.0.0:tgz" command overriding "repository:thirdparty"
+    When I delete an artifact with the GAV of "com.test:mytest:tgz:1.0.0" from the "thirdparty" repository
+    And I call the nexus "info com.test:mytest:tgz:1.0.0" command overriding "repository:thirdparty"
     Then the output should contain:
       """
       The artifact you requested information for could not be found. Please ensure it exists inside the Nexus.

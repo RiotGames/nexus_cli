@@ -21,8 +21,8 @@ module NexusCli
       end
 
       # Creates a custom metadata subject for HTTP requests.
-      def create_base64_subject(group_id, artifact_id, version, extension)
-        return Base64.urlsafe_encode64("urn:maven/artifact##{group_id}:#{artifact_id}:#{version}::#{extension}")
+      def create_base64_subject(artifact)
+        return Base64.urlsafe_encode64("urn:maven/artifact##{artifact.group_id}:#{artifact.artifact_id}:#{artifact.version}::#{artifact.extension}")
       end
 
       # Parses the regular custom metadata xml into a simpler format containing only the custom metadata.
