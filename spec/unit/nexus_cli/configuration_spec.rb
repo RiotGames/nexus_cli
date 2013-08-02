@@ -73,7 +73,7 @@ describe NexusCli::Configuration do
       described_class.new(url: nil, repository: "something", username: "someone", password: "somepass")
     end
 
-    context "when the object is invalide" do
+    context "when the object is invalid" do
       it "raises an error" do
         expect { validate! }.to raise_error(NexusCli::InvalidSettingsException)
       end

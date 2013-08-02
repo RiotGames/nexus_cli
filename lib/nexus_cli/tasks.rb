@@ -27,6 +27,18 @@ module NexusCli
           :default => true,
           :desc => "Set to false to disable SSL Verification."
 
+        desc "start_staging", "Starts a new staging repository"
+        def start_staging
+          say nexus_remote.start
+        end
+
+        desc "close_staging repository_id", "Closes the provided staging repository" 
+        def close_staging(repository_id)
+          if nexus_remote.close(repository_id)
+            say "Staging repository #{repository_id} has been closed."
+          end
+        end
+
         method_option :destination,
           :type => :string,
           :default => nil,

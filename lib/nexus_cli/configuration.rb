@@ -62,6 +62,9 @@ module NexusCli
         m = m.is_a?(String) ? m.gsub(' ', '_').downcase : m
       }
 
+    attribute :default_profile_id,
+      type: String
+
     attribute :username,
       type: String,
       required: true
