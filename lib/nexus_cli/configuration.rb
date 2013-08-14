@@ -3,7 +3,7 @@ require 'chozo'
 
 module NexusCli
   class Configuration
-    DEFAULT_FILE = "~/.nexus_cli".freeze
+    DEFAULT_FILE = (ENV['HOME'] ? "~/.nexus_cli" : "/root/.nexus_cli").freeze
 
     class << self
       # The filepath to the nexus cli configuration file
@@ -14,7 +14,7 @@ module NexusCli
       end
 
       # Creates a new instance of the Configuration object based on some overrides
-      # 
+      #
       # @param [Hash] overrides
       #
       # @return [NexusCli::Configuration]
@@ -40,7 +40,7 @@ module NexusCli
       # is an error with it
       #
       # @param  config [NexusCli::Configuration]
-      # 
+      #
       # @raise [NexusCli::InvalidSettingsException]
       def validate!(config)
         unless config.valid?
