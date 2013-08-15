@@ -50,7 +50,7 @@ module NexusCli
 
         desc "search_for_artifacts", "Searches for all the versions of a particular artifact and prints it to the screen."
         def search_for_artifacts(coordinates)
-          nexus_remote.search_for_artifacts(coordinates).each{|output| say output, :green}
+          say nexus_remote.search_for_artifacts(coordinates), :green
         end
 
         desc "get_artifact_custom_info coordinates", "Gets and returns the custom metadata in XML format about a particular artifact."
@@ -105,7 +105,7 @@ module NexusCli
           say "Your current Nexus global settings have been written to the file: ~/.nexus/global_settings.json", :blue
         end
 
-        method_option :json, 
+        method_option :json,
           :type => :string,
           :default => nil,
           :desc => "A String of the JSON you wish to upload."
@@ -190,10 +190,10 @@ module NexusCli
           :require => false,
           :desc => "An array of roles."
         desc "create_user", "Creates a new user"
-        def create_user         
+        def create_user
           params = ask_user(options)
 
-          if nexus_remote.create_user(params) 
+          if nexus_remote.create_user(params)
             say "A user with the ID of #{params[:userId]} has been created.", :blue
           end
         end
@@ -326,7 +326,7 @@ module NexusCli
         desc "disable_smart_proxy", "Disables Smart Proxy on the server."
         def disable_smart_proxy
           raise NotNexusProException unless nexus_remote.kind_of? ProRemote
-          say nexus_remote.disable_smart_proxy          
+          say nexus_remote.disable_smart_proxy
         end
 
         desc "get_smart_proxy_settings", "Returns the Smart Proxy settings of the server."
@@ -453,9 +453,9 @@ module NexusCli
             password = params[:password]
             roles = params[:roles]
             status = enabled
-            
+
             if username.nil? && ask_username
-              username = ask "Please enter the username:" 
+              username = ask "Please enter the username:"
             end
             if first_name.nil?
               first_name = ask "Please enter the first name:"
@@ -472,7 +472,7 @@ module NexusCli
             if password.nil? && ask_password
               password = ask_password("Please enter a password:")
             end
-            if roles.size == 0 
+            if roles.size == 0
               roles = ask "Please enter the roles:"
             end
             params = {:userId => username}
@@ -486,7 +486,7 @@ module NexusCli
           end
 
           def ask_password(message)
-            HighLine.new.ask(message) do |q| 
+            HighLine.new.ask(message) do |q|
               q.echo = false
             end
           end

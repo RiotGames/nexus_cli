@@ -4,8 +4,8 @@ require 'tempfile'
 module NexusCli
   # @author Kyle Allan <kallan@riotgames.com>
   module ArtifactActions
-    
-    # Retrieves a file from the Nexus server using the given [String] 
+
+    # Retrieves a file from the Nexus server using the given [String]
     # coordinates. Optionally provide a destination [String].
     #
     # @param [String] coordinates
@@ -44,10 +44,10 @@ module NexusCli
 
     # Pushes the given [file] to the Nexus server
     # under the given [artifact] identifier.
-    # 
+    #
     # @param  coordinates [String] the Maven identifier
     # @param  file [type] the path to the file
-    # 
+    #
     # @return [Boolean] returns true when successful
     def push_artifact(coordinates, file)
       artifact = Artifact.new(coordinates)
@@ -90,9 +90,9 @@ module NexusCli
 
     # Retrieves information about the given [artifact] and returns
     # it in as a [String] of XML.
-    # 
+    #
     # @param  coordinates [String] the Maven identifier
-    # 
+    #
     # @return [String] A string of XML data about the desired artifact
     def get_artifact_info(coordinates)
       artifact = Artifact.new(coordinates)
@@ -116,9 +116,9 @@ module NexusCli
     #
     # @param  coordinates [String] the Maven identifier
     # @example com.artifact:my-artifact
-    # 
+    #
     # @return [Array<String>] a formatted Array of results
-    # @example 
+    # @example
     #   1.0.0     `nexus-cli pull com.artifact:my-artifact:tgz:1.0.0`
     #   2.0.0     `nexus-cli pull com.artifact:my-artifact:tgz:2.0.0`
     #   3.0.0     `nexus-cli pull com.artifact:my-artifact:tgz:3.0.0`
@@ -127,8 +127,7 @@ module NexusCli
       response = nexus.get(nexus_url("service/local/data_index"), :query => {:g => group_id, :a => artifact_id})
       case response.status
       when 200
-        doc = REXML::Document.new(response.content)
-        return format_search_results(doc, group_id, artifact_id)
+        return response.content
       else
         raise UnexpectedStatusCodeException.new(response.status)
       end
@@ -142,14 +141,14 @@ module NexusCli
 
     # Formats the given XML into an [Array<String>] so it
     # can be displayed nicely.
-    # 
+    #
     # @param  doc [REXML::Document] the xml search results
     # @param  group_id [String] the group id
     # @param  artifact_id [String] the artifact id
-    # 
+    #
     # @return [type] [description]
     def format_search_results(doc, group_id, artifact_id)
-      
+
       versions = []
       REXML::XPath.each(doc, "//version") { |matched_version| versions << matched_version.text }
       if versions.length > 0
@@ -159,18 +158,18 @@ module NexusCli
           temp_version = version + ":"
           array << "#{temp_version.ljust(indent_size)} `nexus-cli pull #{group_id}:#{artifact_id}:#{version}:tgz`"
         end
-      else 
+      else
         formated_results = ['No Versions Found.']
-      end 
+      end
     end
 
     # Transfers an artifact from one repository
     # to another. Sometimes called a `promotion`
-    # 
+    #
     # @param  coordinates [String] a Maven identifier
     # @param  from_repository [String] the name of the from repository
     # @param  to_repository [String] the name of the to repository
-    # 
+    #
     # @return [Boolean] returns true when successful
     def do_transfer_artifact(coordinates, from_repository, to_repository)
       Dir.mktmpdir do |temp_dir|

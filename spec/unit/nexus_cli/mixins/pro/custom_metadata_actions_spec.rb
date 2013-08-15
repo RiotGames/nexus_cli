@@ -17,5 +17,5 @@ describe NexusCli::CustomMetadataActions do
       get_artifact_array.should be_a(Array)
       get_artifact_array.each { |element| element.should be_a(String) }
     end
-  end  
+  end
 end

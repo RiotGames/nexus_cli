@@ -7,7 +7,7 @@ require 'bundler/setup'
 require 'thor/rake_compat'
 require 'nexus_cli'
 
-class Default < Thor  
+class Default < Thor
   include Thor::RakeCompat
   Bundler::GemHelper.install_tasks
 
