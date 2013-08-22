@@ -50,8 +50,7 @@ Feature: Use the Nexus CLI
     When I call the nexus "search_for_artifacts com.test:mytest" command
     Then the output should contain:
       """
-      Found Versions:
-      1.0.0:    `nexus-cli pull com.test:mytest:tgz:1.0.0`
+      <search-results>
       """
     And the exit status should be 0
 

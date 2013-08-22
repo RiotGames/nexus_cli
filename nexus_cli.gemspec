@@ -26,7 +26,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'activesupport', '>= 3.2.0'
 
   s.add_development_dependency 'rspec'
-  s.add_development_dependency 'aruba'
+  s.add_development_dependency 'aruba', "= 0.5.0"
   s.add_development_dependency 'cucumber'
   s.add_development_dependency 'rake'
   s.add_development_dependency 'webmock'

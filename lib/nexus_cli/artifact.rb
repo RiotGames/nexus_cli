@@ -1,11 +1,7 @@
 module NexusCli
   class Artifact
-    attr_reader :group_id
-    attr_reader :artifact_id
-    attr_reader :extension
-    attr_reader :classifier
-    attr_reader :version
-    attr_reader :file_name
+    attr_reader :group_id, :artifact_id, :extension, :classifier
+    attr_accessor :version
 
     # Constructs an artifact object from Maven co-ordinates
     # See http://maven.apache.org/pom.html#Maven_coordinatess
@@ -16,11 +12,13 @@ module NexusCli
     # @return [Array<String>] an Array with four elements
     def initialize(coordinates)
       @group_id, @artifact_id, @extension, @classifier, @version = parse_coordinates(coordinates)
+    end
 
-      if @classifier.nil?
-        @file_name = "#{@artifact_id}-#{@version}.#{@extension}"
+    def file_name
+      if classifier.nil?
+        "#{artifact_id}-#{version}.#{extension}"
       else
-        @file_name = "#{@artifact_id}-#{@version}-#{@classifier}.#{@extension}"
+        "#{artifact_id}-#{version}-#{classifier}.#{extension}"
       end
     end
 

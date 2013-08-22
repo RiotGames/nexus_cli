@@ -49,6 +49,10 @@ module NexusCli
       end
     end
 
+    def validate!
+      self.class.validate!(self)
+    end
+
     include Chozo::VariaModel
 
     attribute :url,
@@ -63,12 +67,10 @@ module NexusCli
       }
 
     attribute :username,
-      type: String,
-      required: true
+      type: String
 
     attribute :password,
-      type: String,
-      required: true
+      type: String
 
     def initialize(options)
       mass_assign(options)

@@ -14,7 +14,10 @@ module NexusCli
     # @return [Hash] Some information about the artifact that was pulled.
     def pull_artifact(coordinates, destination=nil)
       artifact = Artifact.new(coordinates)
-      version = REXML::Document.new(get_artifact_info(coordinates)).elements["//version"].text if artifact.version.casecmp("latest")
+
+      if artifact.version.casecmp("latest")
+        artifact.version = REXML::Document.new(get_artifact_info(coordinates)).elements["//version"].text
+      end
 
       file_name = artifact.file_name
       destination = File.join(File.expand_path(destination || "."), file_name)
@@ -37,7 +40,7 @@ module NexusCli
       {
         :file_name => file_name,
         :file_path => File.expand_path(destination),
-        :version   => version,
+        :version   => artifact.version,
         :size      => File.size(File.expand_path(destination))
       }
     end

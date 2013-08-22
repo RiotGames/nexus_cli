@@ -25,6 +25,19 @@ describe NexusCli::Configuration do
     it "returns a new Configuration object" do
       expect(from_overrides).to be_a(NexusCli::Configuration)
     end
+
+    context "without username and password" do
+      let(:valid_config) do
+        {
+          "url" => "http://somewebsite.com",
+          "repository" => "foo"
+        }
+      end
+
+      it "should not raise an exception" do
+        expect { from_overrides.validate! }.not_to raise_error
+      end
+    end
   end
 
   describe "::from_file" do
