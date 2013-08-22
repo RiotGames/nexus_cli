@@ -22,20 +22,20 @@ password: 		"password"
 
 # Usage
 
-There are a few calls that can be made. The most important are push\_artifact and pull\_artifact. Both calls will push or pull artifacts from Nexus using the Maven Co-ordinates syntax: `groupId:artifactId:version` or `groupId:artifactId:extension:version` or `groupId:artifactId:extension:classifier:version`
+There are a few calls that can be made. The most important are push\_artifact and pull\_artifact. Both calls will push or pull artifacts from Nexus using the Maven Co-ordinates syntax: `groupId:artifactId:version` or `groupId:artifactId:version:extension` or `groupId:artifactId:extension:classifier:version`
 
 One can also search for artifacts and get back raw xml containing matches.
 
 ## Pull Artifact Example
 
 ```
-nexus-cli pull_artifact com.mycompany.artifacts:myartifact:tgz:1.0.0
+nexus-cli pull_artifact com.mycompany.artifacts:myartifact:1.0.0:tgz
 ```
 
 ## Push Artifact Example
 
 ```
-nexus-cli push_artifact com.mycompany.artifacts:myartifact:tgz:1.0.0 ~/path/to/file/to/push/myartifact.tgz
+nexus-cli push_artifact com.mycompany.artifacts:myartifact:1.0.0:tgz ~/path/to/file/to/push/myartifact.tgz
 ```
 
 ## Search Example
