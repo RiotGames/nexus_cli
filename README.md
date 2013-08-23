@@ -83,13 +83,13 @@ There are also two global config options, `--overrides` which overrides the conf
 ## Pull Artifact Example
 
 ```
-nexus-cli pull_artifact com.mycompany.artifacts:myartifact:tgz:1.0.0
+nexus-cli pull_artifact com.mycompany.artifacts:myartifact:1.0.0:tgz
 ```
 
 ## Push Artifact Example
 
 ```
-nexus-cli push_artifact com.mycompany.artifacts:myartifact:tgz:1.0.0 ~/path/to/file/to/push/myartifact.tgz
+nexus-cli push_artifact com.mycompany.artifacts:myartifact:1.0.0:tgz ~/path/to/file/to/push/myartifact.tgz
 ```
 
 ## Search Example
