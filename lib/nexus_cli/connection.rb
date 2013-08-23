@@ -10,22 +10,6 @@ module NexusCli
       @nexus = setup_nexus(configuration)
     end
 
-    # Returns an HTTPClient instance with settings to connect
-    # to a Nexus server.
-    #
-    # @return [HTTPClient]
-    def setup_nexus(configuration)
-      client = HTTPClient.new
-      client.send_timeout = 6000
-      client.receive_timeout = 6000
-      # https://github.com/nahi/httpclient/issues/63
-      client.set_auth(nil, configuration['username'], configuration['password'])
-      client.www_auth.basic_auth.challenge(configuration['url'])
-      client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE unless ssl_verify
-      
-      client
-    end
-
     # Joins a given url to the current url stored in the configuraiton
     # and returns the combined String.
     #
@@ -76,6 +60,25 @@ module NexusCli
     # connected to is running Nexus Pro.
     def running_nexus_pro?
       status['edition_long'] == "Professional"
+    end
+
+    private
+
+    # Returns an HTTPClient instance with settings to connect
+    # to a Nexus server.
+    #
+    # @return [HTTPClient]
+    def setup_nexus(configuration)
+      client = HTTPClient.new
+      client.send_timeout = 6000
+      client.receive_timeout = 6000
+      if configuration['username'] and configuration['password']
+        # https://github.com/nahi/httpclient/issues/63
+        client.set_auth(nil, configuration['username'], configuration['password'])
+        client.www_auth.basic_auth.challenge(configuration['url'])
+      end
+      client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE unless ssl_verify
+      client
     end
   end
 end
