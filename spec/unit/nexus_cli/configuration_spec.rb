@@ -38,6 +38,28 @@ describe NexusCli::Configuration do
         expect { from_overrides.validate! }.not_to raise_error
       end
     end
+
+    context "when a config file exists" do
+      let(:from_overrides) { configuration.from_overrides(partial_override) }
+      let(:partial_override) do
+        {
+          "repository" => "foobar"
+        }
+      end
+      let(:partial_config_file) do
+        {
+          "url" => "http://somewebsite.com"
+        }
+      end
+
+      before do
+        YAML.stub(:load_file).and_return(partial_config_file)
+      end
+
+      it "uses non-overridden parts from the file" do
+        expect(from_overrides.url).to eql("http://somewebsite.com")
+      end
+    end
   end
 
   describe "::from_file" do
@@ -112,7 +134,7 @@ describe NexusCli::Configuration do
     let(:repository_config) { described_class.new(url: url, repository: repository, username: username, password: password) }
 
     it "returns the repository" do
-      expect(config_instance.repository).to eq("foo")
+      expect(repository_config.repository).to eq("releases")
     end
 
     context "when repository has illegal values" do
