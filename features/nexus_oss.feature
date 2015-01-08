@@ -155,6 +155,23 @@ Feature: Use the Nexus CLI
       """
     And the exit status should be 114
 
+  Scenario: Create a new role mapping in Nexus
+    When I call the nexus "create_role_mapping Role --roles=nx-admin" command
+    Then the output should contain:
+      """
+      A new role mapping named Role has been created.
+      """
+    And the exit status should be 0
+
+  Scenario: Delete a role mapping in Nexus
+    When I call the nexus "delete_role_mapping Role" command
+    And I call the nexus "get_role_mapping_info Role" command
+    Then the output should contain:
+      """
+      The role mapping you provided could not be found. Please ensure the role mapping exists.
+      """
+    And the exit status should be 131
+
   Scenario: Create a new user
     When I call the nexus "create_user --username=cucumber --first_name=John --last_name=Smith --email=jsmith@nexus-cli.com --enabled --roles=nx-admin --password=pass" command
     And I call the nexus "get_users" command

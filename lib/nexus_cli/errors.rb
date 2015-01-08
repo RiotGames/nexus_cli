@@ -256,4 +256,31 @@ The output from the server was:
     end
     status_code(128)
   end
+
+  class CreateRoleMappingException < NexusCliError
+    def initialize(body)
+      @server_response = body
+    end
+
+    def message
+      %{Your create role mapping command failed due to the following:
+#{@server_response}}
+    end
+    status_code(129)
+  end
+
+  # noinspection RubyClassModuleNamingConvention
+  class RoleMappingDoesNotExistException < NexusCliError
+    def message
+      "The role mapping you are trying to delete does not exist."
+    end
+    status_code(130)
+  end
+
+  class RoleMappingNotFoundException < NexusCliError
+    def message
+      "The role mapping you provided could not be found. Please ensure the role mapping exists."
+    end
+    status_code(131)
+  end
 end

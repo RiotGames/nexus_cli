@@ -161,6 +161,52 @@ module NexusCli
           say nexus_remote.get_repository_info(name), :green
         end
 
+        method_option :roles,
+                      :type => :array,
+                      :default => [],
+                      :require => false,
+                      :desc => "An array of roles."
+        method_option :privileges,
+                      :type => :array,
+                      :default => [],
+                      :require => false,
+                      :desc => "An array of priviliges."
+        desc "create_role_mapping name", "Creates a new RoleMapping with the provided name."
+        def create_role_mapping(name)
+          if nexus_remote.create_role_mapping(name, options[:roles], options[:privileges])
+            say "A new role mapping named #{name} has been created.", :blue
+          end
+        end
+
+        desc "delete_role_mapping name", "Deletes a RoleMapping with the provided name."
+        def delete_role_mapping(name)
+          if nexus_remote.delete_role_mapping(name)
+            say "The role mapping named #{name} has been deleted.", :blue
+          end
+        end
+
+        desc "get_role_mapping_info name", "Finds and returns information about the provided role mapping."
+        def get_role_mapping_info(name)
+          say nexus_remote.get_role_mapping_info(name), :green
+        end
+
+        method_option :roles,
+                      :type => :array,
+                      :default => [],
+                      :require => false,
+                      :desc => "An array of roles."
+        method_option :privileges,
+                      :type => :array,
+                      :default => [],
+                      :require => false,
+                      :desc => "An array of priviliges."
+        desc "update_role_mapping name", "Updates a role mapping's details. Leave fields blank for them to remain their current values."
+        def update_role_mapping(name)
+          if nexus_remote.update_role_mapping(name, options[:roles], options[:privileges])
+            say "Role mapping #{name} has been updated.", :blue
+          end
+        end
+
         desc "get_users", "Returns XML representing the users in Nexus."
         def get_users
           say nexus_remote.get_users, :green

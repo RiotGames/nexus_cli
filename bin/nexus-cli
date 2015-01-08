@@ -2,6 +2,10 @@
 $:.push File.expand_path("../../lib", __FILE__)
 require 'nexus_cli'
 
+# https://github.com/nahi/httpclient/issues/242
+# noinspection RubyGlobalVariableNamingConvention
+$VERBOSE = nil
+
 begin
   NexusCli::Cli.start
 rescue NexusCli::NexusCliError => e

@@ -1,3 +1,7 @@
+# https://github.com/nahi/httpclient/issues/242
+# noinspection RubyGlobalVariableNamingConvention
+$VERBOSE = nil
+
 require 'rubygems'
 require 'bundler'
 require 'spork'

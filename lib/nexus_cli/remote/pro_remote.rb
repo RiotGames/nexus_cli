@@ -8,6 +8,7 @@ module NexusCli
     include RepositoryActions
     include SmartProxyActions
     include UserActions
+    include RoleActions
 
     def get_license_info
       response = nexus.get(nexus_url("service/local/licensing"), :header => DEFAULT_ACCEPT_HEADER)
