@@ -1,5 +1,6 @@
 # 4.1.1
 
+* Added some support for managing scheduled tasks
 * Added some support for managing role mappings
 
 # 4.1.0
