@@ -564,7 +564,7 @@ module NexusCli
                       :type => :numeric,
                       :desc => "How many times to retry the downloads.",
                       :default => 3
-        desc "create_download_indexes_task name", "Creates a new task with the provided name to download nuget feeds."
+        desc "create_download_nuget_feed_task name", "Creates a new task with the provided name to download nuget feeds."
         # noinspection RubyInstanceMethodNamingConvention
         def create_download_nuget_feed_task(name)
           if nexus_remote.create_download_nuget_feed_task(name, options[:schedule], options[:enabled],
@@ -653,7 +653,7 @@ module NexusCli
                       :type => :string,
                       :desc => "What repository to create the task for.",
                       :default => 'all_repo'
-        desc "create_publish_indexes_task name", "Creates a new task with the provided name to publish indexes."
+        desc "create_repair_index_task name", "Creates a new task with the provided name to publish indexes."
         def create_repair_index_task(name)
           if nexus_remote.create_repair_index_task(name, options[:schedule], options[:enabled],
                                                       options[:start_date], options[:recurring_time],
