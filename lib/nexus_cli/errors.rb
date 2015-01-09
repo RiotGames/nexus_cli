@@ -283,4 +283,35 @@ The output from the server was:
     end
     status_code(131)
   end
+
+  class CreateTaskException < NexusCliError
+    def initialize(body)
+      @server_response = body
+    end
+
+    def message
+      %{Your create task command failed due to the following:
+#{@server_response}}
+    end
+    status_code(132)
+  end
+
+  class TaskParseException < NexusCliError
+    def initialize(body)
+      @server_response = body
+    end
+
+    def message
+      %{Your command failed because we could not parse the task list:
+#{@server_response}}
+    end
+    status_code(133)
+  end
+
+  class TaskDoesNotExistException < NexusCliError
+    def message
+      "The task you are trying to delete does not exist."
+    end
+    status_code(134)
+  end
 end

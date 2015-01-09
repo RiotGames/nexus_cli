@@ -5,6 +5,7 @@ module NexusCli
   module Tasks
     def self.included(base)
       base.send :include, ::Thor::Actions
+      # noinspection RubyInstanceMethodNamingConvention
       base.class_eval do
 
         map 'pull'          => :pull_artifact
@@ -488,6 +489,255 @@ module NexusCli
         desc "get_artifact_download_url coordinates", "Gets the Nexus download URL for the given artifact."
         def get_artifact_download_url(coordinates)
           say nexus_remote.get_artifact_download_url(coordinates), :green
+        end
+
+        desc "get_tasks", "Returns XML representing the scheduled tasks in Nexus."
+        def get_tasks
+          say nexus_remote.get_tasks, :green
+        end
+
+        desc "delete_task name", "Delete the named scheduled task in Nexus."
+        def delete_task(name)
+          if nexus_remote.delete_task(name)
+            say "Task #{name} has been deleted.", :blue
+          end
+        end
+
+        method_option :schedule,
+                      :type => :string,
+                      :desc => "The schedule to use for the task (daily, hourly, weekly, once, manual, now, cron).",
+                      :default => 'daily'
+        method_option :enabled,
+                      :type => :boolean,
+                      :desc => "Whether to enable the task.",
+                      :default => true
+        method_option :start_date,
+                      :type => :string,
+                      :desc => "What day to start the task for the first time, parsed with ruby Date::parse.",
+                      :default => nil
+        method_option :recurring_time,
+                      :type => :string,
+                      :desc => "What time of day to run the task at.",
+                      :default => nil
+        method_option :repository,
+                      :type => :string,
+                      :desc => "What repository to create the task for.",
+                      :default => 'all_repo'
+        desc "create_download_indexes_task name", "Creates a new task with the provided name to download indexes."
+        def create_download_indexes_task(name)
+          if nexus_remote.create_download_indexes_task(name, options[:schedule], options[:enabled],
+                                                       options[:start_date], options[:recurring_time],
+                                                       options[:repository])
+            say "A new Task named #{name} has been created.", :blue
+          end
+        end
+
+        method_option :schedule,
+                      :type => :string,
+                      :desc => "The schedule to use for the task (daily, hourly, weekly, once, manual, now, cron).",
+                      :default => 'daily'
+        method_option :enabled,
+                      :type => :boolean,
+                      :desc => "Whether to enable the task.",
+                      :default => true
+        method_option :start_date,
+                      :type => :string,
+                      :desc => "What day to start the task for the first time, parsed with ruby Date::parse.",
+                      :default => nil
+        method_option :recurring_time,
+                      :type => :string,
+                      :desc => "What time of day to run the task at.",
+                      :default => nil
+        method_option :repository,
+                      :type => :string,
+                      :desc => "What repository to create the task for.",
+                      :default => 'all_repo'
+        method_option :clear_cache,
+                      :type => :boolean,
+                      :desc => "Whether to clear the existing cache.",
+                      :default => false
+        method_option :all_versions,
+                      :type => :boolean,
+                      :desc => "Whether to download all versions.",
+                      :default => false
+        method_option :retries,
+                      :type => :numeric,
+                      :desc => "How many times to retry the downloads.",
+                      :default => 3
+        desc "create_download_indexes_task name", "Creates a new task with the provided name to download nuget feeds."
+        # noinspection RubyInstanceMethodNamingConvention
+        def create_download_nuget_feed_task(name)
+          if nexus_remote.create_download_nuget_feed_task(name, options[:schedule], options[:enabled],
+                                                       options[:start_date], options[:recurring_time],
+                                                       options[:repository], options[:clear_cache],
+                                                       options[:all_versions], options[:retries])
+            say "A new Task named #{name} has been created.", :blue
+          end
+        end
+
+        method_option :schedule,
+                      :type => :string,
+                      :desc => "The schedule to use for the task (daily, hourly, weekly, once, manual, now, cron).",
+                      :default => 'daily'
+        method_option :enabled,
+                      :type => :boolean,
+                      :desc => "Whether to enable the task.",
+                      :default => true
+        method_option :start_date,
+                      :type => :string,
+                      :desc => "What day to start the task for the first time, parsed with ruby Date::parse.",
+                      :default => nil
+        method_option :recurring_time,
+                      :type => :string,
+                      :desc => "What time of day to run the task at.",
+                      :default => nil
+        method_option :repository,
+                      :type => :string,
+                      :desc => "What repository to create the task for.",
+                      :default => 'all_repo'
+        desc "create_optimize_index_task name", "Creates a new task with the provided name to optimize indexes."
+        def create_optimize_index_task(name)
+          if nexus_remote.create_optimize_index_task(name, options[:schedule], options[:enabled],
+                                                       options[:start_date], options[:recurring_time],
+                                                       options[:repository])
+            say "A new Task named #{name} has been created.", :blue
+          end
+        end
+
+        method_option :schedule,
+                      :type => :string,
+                      :desc => "The schedule to use for the task (daily, hourly, weekly, once, manual, now, cron).",
+                      :default => 'daily'
+        method_option :enabled,
+                      :type => :boolean,
+                      :desc => "Whether to enable the task.",
+                      :default => true
+        method_option :start_date,
+                      :type => :string,
+                      :desc => "What day to start the task for the first time, parsed with ruby Date::parse.",
+                      :default => nil
+        method_option :recurring_time,
+                      :type => :string,
+                      :desc => "What time of day to run the task at.",
+                      :default => nil
+        method_option :repository,
+                      :type => :string,
+                      :desc => "What repository to create the task for.",
+                      :default => 'all_repo'
+        desc "create_publish_indexes_task name", "Creates a new task with the provided name to publish indexes."
+        def create_publish_indexes_task(name)
+          if nexus_remote.create_publish_indexes_task(name, options[:schedule], options[:enabled],
+                                                     options[:start_date], options[:recurring_time],
+                                                     options[:repository])
+            say "A new Task named #{name} has been created.", :blue
+          end
+        end
+
+        method_option :schedule,
+                      :type => :string,
+                      :desc => "The schedule to use for the task (daily, hourly, weekly, once, manual, now, cron).",
+                      :default => 'daily'
+        method_option :enabled,
+                      :type => :boolean,
+                      :desc => "Whether to enable the task.",
+                      :default => true
+        method_option :start_date,
+                      :type => :string,
+                      :desc => "What day to start the task for the first time, parsed with ruby Date::parse.",
+                      :default => nil
+        method_option :recurring_time,
+                      :type => :string,
+                      :desc => "What time of day to run the task at.",
+                      :default => nil
+        method_option :repository,
+                      :type => :string,
+                      :desc => "What repository to create the task for.",
+                      :default => 'all_repo'
+        desc "create_publish_indexes_task name", "Creates a new task with the provided name to publish indexes."
+        def create_repair_index_task(name)
+          if nexus_remote.create_repair_index_task(name, options[:schedule], options[:enabled],
+                                                      options[:start_date], options[:recurring_time],
+                                                      options[:repository])
+            say "A new Task named #{name} has been created.", :blue
+          end
+        end
+
+        method_option :schedule,
+                      :type => :string,
+                      :desc => "The schedule to use for the task (daily, hourly, weekly, once, manual, now, cron).",
+                      :default => 'daily'
+        method_option :enabled,
+                      :type => :boolean,
+                      :desc => "Whether to enable the task.",
+                      :default => true
+        method_option :start_date,
+                      :type => :string,
+                      :desc => "What day to start the task for the first time, parsed with ruby Date::parse.",
+                      :default => nil
+        method_option :recurring_time,
+                      :type => :string,
+                      :desc => "What time of day to run the task at.",
+                      :default => nil
+        method_option :repository,
+                      :type => :string,
+                      :desc => "What repository to create the task for.",
+                      :default => 'all_repo'
+        desc "create_update_index_task name", "Creates a new task with the provided name to update indexes."
+        def create_update_index_task(name)
+          if nexus_remote.create_update_index_task(name, options[:schedule], options[:enabled],
+                                                   options[:start_date], options[:recurring_time],
+                                                   options[:repository])
+            say "A new Task named #{name} has been created.", :blue
+          end
+        end
+
+        method_option :schedule,
+                      :type => :string,
+                      :desc => "The schedule to use for the task (daily, hourly, weekly, once, manual, now, cron).",
+                      :default => 'daily'
+        method_option :enabled,
+                      :type => :boolean,
+                      :desc => "Whether to enable the task.",
+                      :default => true
+        method_option :start_date,
+                      :type => :string,
+                      :desc => "What day to start the task for the first time, parsed with ruby Date::parse.",
+                      :default => nil
+        method_option :recurring_time,
+                      :type => :string,
+                      :desc => "What time of day to run the task at.",
+                      :default => nil
+        method_option :repository,
+                      :type => :string,
+                      :desc => "What repository to create the task for.",
+                      :default => 'all_repo'
+        method_option :min_snapshots,
+                      :type => :numeric,
+                      :desc => "Minimum number of snapshot versions to keep for a particular artifact.",
+                      :default => 10
+        method_option :remove_older,
+                      :type => :numeric,
+                      :desc => "Only remove snapshots older than this number of days.",
+                      :default => 10
+        method_option :remove_if_release,
+                      :type => :boolean,
+                      :desc => "Remove snapshots for which a final release with the same version number exists.",
+                      :default => false
+        method_option :grace_after_release,
+                      :type => :numeric,
+                      :desc => "Grace period after release to keep snapshots even if remove_if_release is true.",
+                      :default => nil
+        method_option :delete_immediately,
+                      :type => :boolean,
+                      :desc => "Completely delete snapshots immediately rather than move them to the trash.",
+                      :default => false
+        desc "create_snapshot_remover_task name", "Creates a new task with the provided name to remove snapshots."
+        def create_snapshot_remover_task(name)
+          if nexus_remote.create_snapshot_remover_task(name, options[:schedule], options[:enabled],
+                                                   options[:start_date], options[:recurring_time],
+                                                   options[:repository])
+            say "A new Task named #{name} has been created.", :blue
+          end
         end
 
         private

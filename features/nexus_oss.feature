@@ -274,3 +274,53 @@ Feature: Use the Nexus CLI
       \"id\":\"cucumber_group\"
       """
     And the exit status should be 114
+
+  Scenario: Create a new download indexes scheduled task in Nexus
+    When I call the nexus "create_download_indexes_task Download-Indexes" command
+    Then the output should contain:
+      """
+      A new Task named Download-Indexes has been created.
+      """
+    And the exit status should be 0
+
+  Scenario: Deleted a scheduled task in Nexus
+    When I call the nexus "delete_task Download-Indexes" command
+    And I call the nexus "get_tasks" command
+    Then the output should not contain:
+      """
+      <name>Download-Indexes</name>
+      """
+    And the exit status should be 0
+
+  Scenario: Create a new download nuget feeds scheduled task in Nexus
+    When I call the nexus "create_download_nuget_feed_task Download-NuGet-Indexes" command
+    Then the output should contain:
+      """
+      A new Task named Download-NuGet-Indexes has been created.
+      """
+    And the exit status should be 0
+
+  Scenario: Create a new publish indexes scheduled task in Nexus
+    When I call the nexus "create_publish_indexes_task Publish-Indexes" command
+    Then the output should contain:
+      """
+      A new Task named Publish-Indexes has been created.
+      """
+    And the exit status should be 0
+
+  Scenario: Create a new update indexes scheduled task in Nexus
+    When I call the nexus "create_update_index_task Update-Indexes" command
+    Then the output should contain:
+      """
+      A new Task named Update-Indexes has been created.
+      """
+    And the exit status should be 0
+
+
+  Scenario: Create a new remove snapshots scheduled task in Nexus
+    When I call the nexus "create_snapshot_remover_task Remove-Snapshots" command
+    Then the output should contain:
+      """
+      A new Task named Remove-Snapshots has been created.
+      """
+    And the exit status should be 0
