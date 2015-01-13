@@ -100,8 +100,12 @@ module NexusCli
       params[:id] = sanitize_for_id(name)
       params[:name] = name
       params[:description] = "External mapping for #{name} (LDAP)"
-      params[:roles] = roles
-      params[:privileges] = privileges
+      unless roles.nil?
+        params[:roles] = roles
+      end
+      unless privileges.nil?
+        params[:privileges] = privileges
+      end
       JSON.dump(:data => params)
     end
   end
