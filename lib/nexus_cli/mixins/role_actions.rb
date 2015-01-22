@@ -35,7 +35,7 @@ module NexusCli
     # 
     # @return [Boolean] true if the role mapping is deleted, false otherwise.
     def delete_role_mapping(name)
-      response = nexus.delete(nexus_url("service/local/roles/#{sanitize_for_id(name)}"))
+      response = nexus.delete(nexus_url("service/local/roles/#{name}"))
       case response.status
         when 204
           return true
@@ -57,7 +57,7 @@ module NexusCli
     # @return [String] A String of XML with information about the desired
     # repository.
     def get_role_mapping_info(name)
-      response = nexus.get(nexus_url("service/local/roles/#{sanitize_for_id(name)}"), :header => DEFAULT_ACCEPT_HEADER)
+      response = nexus.get(nexus_url("service/local/roles/#{name}"), :header => DEFAULT_ACCEPT_HEADER)
       case response.status
         when 200
           return response.content
@@ -79,7 +79,7 @@ module NexusCli
     # @return [Boolean] true if the role mapping is successfully updated, false otherwise
     def update_role_mapping(name, roles=[], privileges=[])
       json = role_mapping_json(name, privileges, roles)
-      response = nexus.put(nexus_url("service/local/roles/#{sanitize_for_id(name)}"),
+      response = nexus.put(nexus_url("service/local/roles/#{nam)}"),
                            :body => json, :header => DEFAULT_CONTENT_TYPE_HEADER)
       case response.status
         when 200
