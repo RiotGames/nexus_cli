@@ -79,7 +79,7 @@ module NexusCli
     # @return [Boolean] true if the role mapping is successfully updated, false otherwise
     def update_role_mapping(name, roles=[], privileges=[])
       json = role_mapping_json(name, privileges, roles)
-      response = nexus.put(nexus_url("service/local/roles/#{nam)}"),
+      response = nexus.put(nexus_url("service/local/roles/#{name}"),
                            :body => json, :header => DEFAULT_CONTENT_TYPE_HEADER)
       case response.status
         when 200
