@@ -97,7 +97,7 @@ module NexusCli
   
     def role_mapping_json(name, roles, privileges)
       params = {}
-      params[:id] = sanitize_for_id(name)
+      params[:id] = name
       params[:name] = name
       params[:description] = "External mapping for #{name} (LDAP)"
       unless roles.nil?
