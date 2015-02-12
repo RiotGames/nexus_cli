@@ -6,6 +6,7 @@ module NexusCli
     include GlobalSettingsActions
     include LoggingActions
     include RepositoryActions
+    include CapabilityActions
     include UserActions
   end
 end

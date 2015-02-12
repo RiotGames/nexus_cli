@@ -161,6 +161,37 @@ module NexusCli
           say nexus_remote.get_repository_info(name), :green
         end
 
+        method_option :enabled,
+          :type => :boolean,
+          :desc => "Whether the capability is enabled or not, true by default."
+        method_option :properties,
+          :type => :hash,
+          :desc => "Json array of properties to use for the capability"
+        desc "create_capability type", "Creates a new capability with the provided type."
+        def create_capability(type)
+          id = nexus_remote.create_capability(type, options[:enabled], options[:properties])
+          if id
+            say "A new Capability with an id of #{id} has been created.", :blue
+          end
+        end
+
+        desc "delete_capability id", "Deletes a capability with the provided id."
+        def delete_capability(id)
+          if nexus_remote.delete_capability(id)
+            say "The Repository named #{id} has been deleted.", :blue
+          end
+        end
+
+        desc "get_capability_info id", "Finds and returns information about the provided capability."
+        def get_capability_info(id)
+          say nexus_remote.get_capability_info(id), :green
+        end
+
+        desc "get_capability_info id", "Finds and returns information about the provided capability."
+        def get_capabilities_info()
+          say nexus_remote.get_capabilities_info(), :green
+        end
+
         desc "get_users", "Returns XML representing the users in Nexus."
         def get_users
           say nexus_remote.get_users, :green
