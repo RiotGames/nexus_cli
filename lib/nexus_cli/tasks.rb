@@ -5,7 +5,6 @@ module NexusCli
   module Tasks
     def self.included(base)
       base.send :include, ::Thor::Actions
-      # noinspection RubyInstanceMethodNamingConvention
       base.class_eval do
 
         map 'pull'          => :pull_artifact
@@ -565,7 +564,6 @@ module NexusCli
                       :desc => "How many times to retry the downloads.",
                       :default => 3
         desc "create_download_nuget_feed_task name", "Creates a new task with the provided name to download nuget feeds."
-        # noinspection RubyInstanceMethodNamingConvention
         def create_download_nuget_feed_task(name)
           if nexus_remote.create_download_nuget_feed_task(name, options[:schedule], options[:enabled],
                                                        options[:start_date], options[:recurring_time],

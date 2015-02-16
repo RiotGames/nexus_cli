@@ -269,7 +269,6 @@ The output from the server was:
     status_code(129)
   end
 
-  # noinspection RubyClassModuleNamingConvention
   class RoleMappingDoesNotExistException < NexusCliError
     def message
       "The role mapping you are trying to delete does not exist."

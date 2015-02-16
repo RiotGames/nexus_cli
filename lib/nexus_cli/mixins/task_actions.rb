@@ -5,6 +5,31 @@ module NexusCli
   # @author Leo Simons <lsimons@schubergphilis.com>
   module TaskActions
 
+    DOWNLOAD_INDEXES_TASK = 'DownloadIndexesTask'
+    EMPTY_TRASH_TASK = 'EmptyTrashTask'
+    DOWNLOAD_NUGET_FEED_TASK = 'DownloadNugetFeedTask'
+    OPTIMIZE_INDEX_TASK = 'OptimizeIndexTask'
+    PUBLISH_INDEXES_TASK = 'PublishIndexesTask'
+    REPAIR_INDEX_TASK = 'RepairIndexTask'
+    UPDATE_INDEX_TASK = 'UpdateIndexTask'
+    SNAPSHOT_REMOVER_TASK = 'SnapshotRemoverTask'
+
+    # exist but aren't mapped...
+    #
+    # EvictUnusedProxiedItemsTask, number
+    # ExpireCacheTask, [resourceStorePath]
+    # PurgeBrokenRubygemsMetadataTask
+    # PurgeTimeline, purgeOlderThan
+    # PurgeApiKeysTask
+    # ReleaseRemoverTask, numberOfVersionsToKeep, [repositoryTarget]
+    # UnusedSnapshotRemoverTask, daysSinceLastRequested
+    # RebuildRubygemsMetadataTask
+    # SyncRubygemsMetadataTask
+    # SynchronizeShadowsTask
+    # RebuildMavenMetadataTask, [resourceStorePath]
+    # RebuildNugetFeedTask, [resourceStorePath]
+    # GenerateMetadataTask, repoId, repoDir, []singleRpmPerDir], [forcefullScan]
+
     # Gets information about the current Nexus scheduled tasks.
     #
     # @param  header a header to send with the request (Accept: application/xml by default)
@@ -21,7 +46,7 @@ module NexusCli
 
     def create_download_indexes_task(name, schedule='daily', enabled=true, start_date=nil, recurring_time=nil,
                                      repository_id='all_repo')
-      params = common_task_params('DownloadIndexesTask', enabled, name, recurring_time, schedule, start_date,
+      params = common_task_params(DOWNLOAD_INDEXES_TASK, enabled, name, recurring_time, schedule, start_date,
                                   repository_id)
       create_task(params)
     end
@@ -38,18 +63,18 @@ module NexusCli
     #     running for all repositories
     # @param  older_than_days how old items in the trash must be before being deleted by this task
     # @return true if the task was created, raises an error otherwise
+
     def create_empty_trash_task(name, schedule='daily', enabled=true, start_date=nil, recurring_time=nil,
                                 repository_id='all_repo', older_than_days=10)
-      params = common_task_params('EmptyTrashTask', enabled, name, recurring_time, schedule, start_date,
+      params = common_task_params(EMPTY_TRASH_TASK, enabled, name, recurring_time, schedule, start_date,
                                   repository_id)
       params[:properties] << to_property('EmptyTrashItemsOlderThan', older_than_days)
       create_task(params)
     end
 
-    # noinspection RubyInstanceMethodNamingConvention
     def create_download_nuget_feed_task(name, schedule='daily', enabled=true, start_date=nil, recurring_time=nil,
                                         repository_id='all_repo', clear_cache=false, all_versions=false, retries=3)
-      params = common_task_params('DownloadNugetFeedTask', enabled, name, recurring_time, schedule, start_date,
+      params = common_task_params(DOWNLOAD_NUGET_FEED_TASK, enabled, name, recurring_time, schedule, start_date,
                                   repository_id)
       params[:properties] << to_property('clearCache', clear_cache)
       params[:properties] << to_property('allVersions', all_versions)
@@ -59,14 +84,14 @@ module NexusCli
 
     def create_optimize_index_task(name, schedule='daily', enabled=true, start_date=nil, recurring_time=nil,
                                    repository_id='all_repo')
-      params = common_task_params('OptimizeIndexTask', enabled, name, recurring_time, schedule, start_date,
+      params = common_task_params(OPTIMIZE_INDEX_TASK, enabled, name, recurring_time, schedule, start_date,
                                   repository_id)
       create_task(params)
     end
 
     def create_publish_indexes_task(name, schedule='daily', enabled=true, start_date=nil, recurring_time=nil,
                                     repository_id='all_repo')
-      params = common_task_params('PublishIndexesTask', enabled, name, recurring_time, schedule, start_date,
+      params = common_task_params(PUBLISH_INDEXES_TASK, enabled, name, recurring_time, schedule, start_date,
                                   repository_id)
       create_task(params)
     end
@@ -74,7 +99,7 @@ module NexusCli
     def create_repair_index_task(name, schedule='daily', enabled=true, start_date=nil, recurring_time=nil,
                                  repository_id='all_repo')
       # [resourceStorePath]
-      params = common_task_params('RepairIndexTask', enabled, name, recurring_time, schedule, start_date,
+      params = common_task_params(REPAIR_INDEX_TASK, enabled, name, recurring_time, schedule, start_date,
                                   repository_id)
       create_task(params)
     end
@@ -82,7 +107,7 @@ module NexusCli
     def create_update_index_task(name, schedule='daily', enabled=true, start_date=nil, recurring_time=nil,
                                  repository_id='all_repo')
       # [resourceStorePath]
-      params = common_task_params('UpdateIndexTask', enabled, name, recurring_time, schedule, start_date,
+      params = common_task_params(UPDATE_INDEX_TASK, enabled, name, recurring_time, schedule, start_date,
                                   repository_id)
       create_task(params)
     end
@@ -90,7 +115,7 @@ module NexusCli
     def create_snapshot_remover_task(name, schedule='daily', enabled=true, start_date=nil, recurring_time=nil,
                                      repository_id='all_repo', min_snapshots=10, remove_older=10,
                                      remove_if_release=false, grace_after_release=nil, delete_immediately=false)
-      params = common_task_params('SnapshotRemoverTask', enabled, name, recurring_time, schedule, start_date,
+      params = common_task_params(SNAPSHOT_REMOVER_TASK, enabled, name, recurring_time, schedule, start_date,
                                   repository_id)
       if not min_snapshots.nil? and min_snapshots >= 0
         params[:properties] << to_property('minSnapshotsToKeep', min_snapshots)
@@ -107,22 +132,6 @@ module NexusCli
       params[:properties] << to_property('deleteImmediately', delete_immediately)
       create_task(params)
     end
-
-    # exist but aren't mapped...
-    #
-    # EvictUnusedProxiedItemsTask, number
-    # ExpireCacheTask, [resourceStorePath]
-    # PurgeBrokenRubygemsMetadataTask
-    # PurgeTimeline, purgeOlderThan
-    # PurgeApiKeysTask
-    # ReleaseRemoverTask, numberOfVersionsToKeep, [repositoryTarget]
-    # UnusedSnapshotRemoverTask, daysSinceLastRequested
-    # RebuildRubygemsMetadataTask
-    # SyncRubygemsMetadataTask
-    # SynchronizeShadowsTask
-    # RebuildMavenMetadataTask, [resourceStorePath]
-    # RebuildNugetFeedTask, [resourceStorePath]
-    # GenerateMetadataTask, repoId, repoDir, []singleRpmPerDir], [forcEfullScan]
 
     # Creates a new scheduled task.
     #
@@ -215,7 +224,6 @@ module NexusCli
       )
     end
 
-    # noinspection RubyStringKeysInHashInspection
     def to_property(key, value)
       {'key' => key, 'value' => value}
     end
