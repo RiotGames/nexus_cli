@@ -12,6 +12,8 @@ module NexusCli
     # @param  id [String] the id of repository 
     # @param  policy [String] repository policy (RELEASE|SNAPSHOT)
     # @param  provider [String] repo provider (maven2 by default)
+    # @param  username [String]
+    # @param  password [String]
     # 
     # @return [Boolean] returns true on success
     def create_repository(name, proxy, url, id, policy, provider, username, password)
