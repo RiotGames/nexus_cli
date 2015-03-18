@@ -142,9 +142,15 @@ module NexusCli
         method_option :url,
           :type => :string,
           :desc => "The url of the actual repository for the proxy repository to use."
+        method_option :username,
+          :type => :string,
+          :desc => "The username for the remote proxy repository."
+        method_option :password,
+          :type => :string,
+          :desc => "The password for the remote proxy repository."
         desc "create_repository name", "Creates a new Repository with the provided name."
         def create_repository(name)
-          if nexus_remote.create_repository(name, options[:proxy], options[:url], options[:id], options[:policy], options[:provider])
+          if nexus_remote.create_repository(name, options[:proxy], options[:url], options[:id], options[:policy], options[:provider], options[:username], options[:password])
             say "A new Repository named #{name} has been created.", :blue
           end
         end
