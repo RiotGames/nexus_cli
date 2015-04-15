@@ -386,10 +386,10 @@ module NexusCli
           say nexus_remote.get_logging_info, :green
         end
 
-        desc "set_logger_level level", "Updates the log4j logging level to a new value."
-        def set_logger_level(level)
-          if nexus_remote.set_logger_level(level)
-            say "The logging level of Nexus has been set to #{level.upcase}", :blue
+        desc "set_logger_level name level", "Updates the log4j logging level to a new value."
+        def set_logger_level(name, level)
+          if nexus_remote.set_logger_level(name, level)
+            say "The logging level of Logger #{name} has been set to #{level.upcase}", :blue
           end
         end
 

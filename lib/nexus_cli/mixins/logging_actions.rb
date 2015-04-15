@@ -8,25 +8,30 @@ module NexusCli
     # 
     # @return [String] a String of JSON representing the current logging levels of Nexus
     def get_logging_info
-      response = nexus.get(nexus_url("service/local/log/config"), :header => DEFAULT_ACCEPT_HEADER)
+      response = nexus.get(nexus_url("service/siesta/logging/loggers"), :header => DEFAULT_ACCEPT_HEADER)
       case response.status
-      when 200
-        return response.content
-      else
-        raise UnexpectedStatusCodeException.new(response.status)
+        when 200
+          data = Hash.new()
+          JSON.parse(response.content).each do |entry|
+            data["#{entry['name']}"] = "#{entry['level']}"
+          end
+          return JSON.dump(data)
+        else
+          raise UnexpectedStatusCodeException.new(response.status)
       end
     end
 
 
     # Sets the logging level of Nexus to one of
-    # "INFO", "DEBUG", or "ERROR".
+    # "TRACE" "DEBUG" "INFO" "WARN" "ERROR" "OFF" or "DEFAULT".
     # 
+    # @param  name [String] logger to configure
     # @param  level [String] the logging level to set
-    # 
+    #
     # @return [Boolean] true if the logging level has been set, false otherwise
-    def set_logger_level(level)
-      raise InvalidLoggingLevelException unless ["INFO", "DEBUG", "ERROR"].include?(level.upcase)
-      response = nexus.put(nexus_url("service/local/log/config"), :body => create_logger_level_json(level), :header => DEFAULT_CONTENT_TYPE_HEADER)
+    def set_logger_level(name, level)
+      raise InvalidLoggingLevelException unless %w(TRACE DEBUG INFO WARN ERROR OFF DEFAULT).include?(level.upcase)
+      response = nexus.post(nexus_url("service/siesta/logging/loggers"), :body => create_logger_level_json(name, level), :header => DEFAULT_CONTENT_TYPE_HEADER)
       case response.status
       when 200
         return true
@@ -37,9 +42,10 @@ module NexusCli
 
     private
 
-    def create_logger_level_json(level)
-      params = {:rootLoggerLevel => level.upcase}
-      JSON.dump(:data => params)
+    def create_logger_level_json(name, level)
+      params = {:name => name}
+      params[:level] = level.upcase
+      JSON.dump(params)
     end
   end
 end

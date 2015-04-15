@@ -53,7 +53,7 @@ nexus-cli get_artifact_info coordinates                                        #
 nexus-cli get_global_settings                                                  # Prints out your Nexus' current setttings and saves them to a file.
 nexus-cli get_group_repository group_id                                        # Gets information about the given group repository.
 nexus-cli get_license_info                                                     # Returns the license information of the server.
-nexus-cli get_logging_info                                                     # Gets the log4j Settings of the Nexus server.
+nexus-cli get_logging_info                                                     # Gets the logger settings of the Nexus server.
 nexus-cli get_nexus_configuration                                              # Prints out configuration from the .nexus_cli file that helps inform where artifacts will be uploaded.
 nexus-cli get_nexus_status                                                     # Prints out information about the Nexus instance.
 nexus-cli get_pub_sub repository_id                                            # Returns the publish/subscribe status of the given repository.
@@ -69,7 +69,7 @@ nexus-cli remove_from_group_repository group_id repository_to_remove_id        #
 nexus-cli reset_global_settings                                                # Resets your Nexus global_settings to their out-of-the-box defaults.
 nexus-cli search_artifacts_custom param1 param2 ...                            # Searches for artifacts using artifact metadata and returns the result as a list with items in XML format.
 nexus-cli search_for_artifacts                                                 # Searches for all the versions of a particular artifact and prints it to the screen.
-nexus-cli set_logger_level level                                               # Updates the log4j logging level to a new value.
+nexus-cli set_logger_level name level                                          # Updates logging level to [level] for logger [name].
 nexus-cli transfer_artifact coordinates from_repository to_repository          # Transfers a given artifact from one repository to another.
 nexus-cli update_artifact_custom_info coordinates param1 param2 ...            # Updates the artifact custom metadata with the given key-value pairs.
 nexus-cli update_user user_id                                                  # Updates a user's details. Leave fields blank for them to remain their current values.
