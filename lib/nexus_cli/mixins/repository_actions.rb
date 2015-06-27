@@ -3,16 +3,16 @@ require 'json'
 module NexusCli
   # @author Kyle Allan <kallan@riotgames.com>
   module RepositoryActions
-    
+
     # Creates a repository that the Nexus uses to hold artifacts.
-    # 
+    #
     # @param  name [String] the name of the repository to create
     # @param  proxy [Boolean] true if this is a proxy repository
     # @param  url [String] the url for the proxy repository to point to
-    # @param  id [String] the id of repository 
+    # @param  id [String] the id of repository
     # @param  policy [String] repository policy (RELEASE|SNAPSHOT)
     # @param  provider [String] repo provider (maven2 by default)
-    # 
+    #
     # @return [Boolean] returns true on success
     def create_repository(name, proxy, url, id, policy, provider)
       json = if proxy
@@ -32,10 +32,10 @@ module NexusCli
     end
 
     # Deletes the given repository
-    # 
+    #
     # @param  name [String] the name of the repositroy to delete, transformed
     # into an id.
-    # 
+    #
     # @return [Boolean] true if the repository is deleted, false otherwise.
     def delete_repository(name)
       response = nexus.delete(nexus_url("service/local/repositories/#{sanitize_for_id(name)}"))
@@ -51,10 +51,10 @@ module NexusCli
 
     # Find information about the repository with the given
     # [name].
-    # 
+    #
     # @param  name [String] the name of the repository, transformed
     # into an id.
-    # 
+    #
     # @return [String] A String of XML with information about the desired
     # repository.
     def get_repository_info(name)
@@ -72,11 +72,11 @@ module NexusCli
     end
 
     # Creates a group repository with the given name.
-    # 
+    #
     # @param  name [String] the name to give the new repository
     # @param  id [String] an alternative id to use for the new repository
     # @param  provider [String] the type of Maven provider for this repository
-    # 
+    #
     # @return [Boolean] true if the group repository is created, false otherwise
     def create_group_repository(name, id, provider)
       response = nexus.post(nexus_url("service/local/repo_groups"), :body => create_group_repository_json(name, id, provider), :header => DEFAULT_CONTENT_TYPE_HEADER)
@@ -92,9 +92,9 @@ module NexusCli
 
     # Gets information about the given group repository with
     # the given [group_id].
-    # 
+    #
     # @param  group_id [String] the id of the group repository to find
-    # 
+    #
     # @return [String] a JSON String of information about the given group repository
     def get_group_repository(group_id)
       response = nexus.get(nexus_url("service/local/repo_groups/#{sanitize_for_id(group_id)}"), :header => DEFAULT_ACCEPT_HEADER)
@@ -110,10 +110,10 @@ module NexusCli
 
     # Checks if a the given [repository_to_check] is a member
     # of the given group repository - [group_ip].
-    # 
+    #
     # @param  group_id [String] the group repository to look in
     # @param  repository_to_check [String] the repository that might be a member of the group
-    # 
+    #
     # @return [Boolean] true if the [repository_to_check] is a member of group repository, false otherwise
     def repository_in_group?(group_id, repository_to_check)
       group_repository = JSON.parse(get_group_repository(group_id))
@@ -124,10 +124,10 @@ module NexusCli
 
     # Adds the given [repository_to_add_id] to the given group repository,
     # [group_id].
-    # 
+    #
     # @param  group_id [String] the group repository to add to
     # @param  repository_to_add_id [String] the repository to added to the group
-    # 
+    #
     # @return [Boolean] true if the repository is successfully added, false otherwise
     def add_to_group_repository(group_id, repository_to_add_id)
       raise RepositoryInGroupException if repository_in_group?(group_id, repository_to_add_id)
@@ -144,10 +144,10 @@ module NexusCli
 
     # Removes the given [repository_to_remove_id] from the group repository,
     # [group_id].
-    # 
+    #
     # @param  group_id [String] the group repository to remove from
     # @param  repository_to_remove_id [String] the repository to remove from the group
-    # 
+    #
     # @return [Boolean] true if the repisotory is successfully remove, false otherwise
     def remove_from_group_repository(group_id, repository_to_remove_id)
       raise RepositoryNotInGroupException unless repository_in_group?(group_id, repository_to_remove_id)
@@ -161,9 +161,9 @@ module NexusCli
     end
 
     # Deletes the given group repository.
-    # 
+    #
     # @param  group_id [String] the group repository to delete
-    # 
+    #
     # @return [Boolean] true if the group repository is deleted, false otherwise
     def delete_group_repository(group_id)
       response = nexus.delete(nexus_url("service/local/repo_groups/#{sanitize_for_id(group_id)}"))
@@ -186,7 +186,7 @@ module NexusCli
       params[:browseable] = true
       params[:indexable] = true
       params[:repoType] = "hosted"
-      params[:repoPolicy] = policy.nil? ? "RELEASE" : ["RELEASE", "SNAPSHOT"].include?(policy) ? policy : "RELEASE" 
+      params[:repoPolicy] = policy.nil? ? "RELEASE" : ["RELEASE", "SNAPSHOT"].include?(policy) ? policy : "RELEASE"
       params[:name] = name
       params[:id] = id.nil? ? sanitize_for_id(name) : sanitize_for_id(id)
       params[:format] = "maven2"
@@ -200,7 +200,7 @@ module NexusCli
       params[:browseable] = true
       params[:indexable] = true
       params[:repoType] = "proxy"
-      params[:repoPolicy] = policy.nil? ? "RELEASE" : ["RELEASE", "SNAPSHOT"].include?(policy) ? policy : "RELEASE" 
+      params[:repoPolicy] = policy.nil? ? "RELEASE" : ["RELEASE", "SNAPSHOT"].include?(policy) ? policy : "RELEASE"
       params[:checksumPolicy] = "WARN"
       params[:writePolicy] = "READ_ONLY"
       params[:downloadRemoteIndexes] = true
@@ -235,7 +235,7 @@ module NexusCli
       repositories = group_repository_json["data"]["repositories"]
 
       repositories.delete(repository_in_group?(group_id, repository_to_remove_id))
-      
+
       params = {:repositories => repositories}
       params[:id] = group_repository_json["data"]["id"]
       params[:name] = group_repository_json["data"]["name"]

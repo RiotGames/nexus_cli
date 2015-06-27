@@ -1,3 +1,6 @@
+# 4.2.0
+* [#114](https://github.com/RiotGamesMinions/nexus_cli/pull/114)
+
 # 4.1.0
 
 * [#92](https://github.com/RiotGames/nexus_cli/pull/92) Added a new task for gettting an artifact's download URL

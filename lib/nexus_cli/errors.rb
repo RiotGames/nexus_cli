@@ -244,7 +244,7 @@ The output from the server was:
     end
     status_code(127)
   end
-  
+
   class NexusHTTP404 < NexusCliError
     def initialize(body)
       @server_response = body
@@ -255,5 +255,32 @@ The output from the server was:
 #{@server_response}}
     end
     status_code(128)
+  end
+
+
+  class CreateCapabilityException < NexusCliError
+    def initialize(body)
+      @server_response = JSON.pretty_generate(JSON.parse(body))
+    end
+
+    def message
+      %{Your create capability command failed due to the following:
+#{@server_response}}
+    end
+    status_code(129)
+  end
+
+  class CapabilityDoesNotExistException < NexusCliError
+    def message
+      "The capability you are trying to delete does not exist."
+    end
+    status_code(130)
+  end
+
+  class CapabilityNotFoundException < NexusCliError
+    def message
+      "The capability you provided could not be found. Please ensure the capability exists."
+    end
+    status_code(131)
   end
 end
