@@ -12,11 +12,13 @@ module NexusCli
     # @param  id [String] the id of repository 
     # @param  policy [String] repository policy (RELEASE|SNAPSHOT)
     # @param  provider [String] repo provider (maven2 by default)
+    # @param  username [String]
+    # @param  password [String]
     # 
     # @return [Boolean] returns true on success
-    def create_repository(name, proxy, url, id, policy, provider)
+    def create_repository(name, proxy, url, id, policy, provider, username, password)
       json = if proxy
-        create_proxy_repository_json(name, url, id, policy, provider)
+        create_proxy_repository_json(name, url, id, policy, provider, username, password)
       else
         create_hosted_repository_json(name, id, policy, provider)
       end
@@ -186,14 +188,14 @@ module NexusCli
       params[:browseable] = true
       params[:indexable] = true
       params[:repoType] = "hosted"
-      params[:repoPolicy] = policy.nil? ? "RELEASE" : ["RELEASE", "SNAPSHOT"].include?(policy) ? policy : "RELEASE" 
-      params[:name] = name
+      params[:repoPolicy] = policy.nil? ? "RELEASE" : ["RELEASE", "SNAPSHOT"].include?(policy) ? policy : "RELEASE"
+      params[:name] = name.nil? ? id : name
       params[:id] = id.nil? ? sanitize_for_id(name) : sanitize_for_id(id)
       params[:format] = "maven2"
       JSON.dump(:data => params)
     end
 
-    def create_proxy_repository_json(name, url, id, policy, provider)
+    def create_proxy_repository_json(name, url, id, policy, provider, username, password)
       params = {:provider => provider.nil? ? "maven2" : provider}
       params[:providerRole] = "org.sonatype.nexus.proxy.repository.Repository"
       params[:exposed] = true
@@ -205,15 +207,20 @@ module NexusCli
       params[:writePolicy] = "READ_ONLY"
       params[:downloadRemoteIndexes] = true
       params[:autoBlockActive] = false
-      params[:name] = name
+      params[:name] = name.nil? ? id : name
       params[:id] = id.nil? ? sanitize_for_id(name) : sanitize_for_id(id)
       params[:remoteStorage] = {:remoteStorageUrl => url.nil? ? "http://change-me.com/" : url}
+      if (username) && (password)
+        params[:remoteStorage] = {:remoteStorageUrl => url.nil? ? "http://change-me.com/" : url, :authentication =>  {"username" => username ,"password" => password}}
+      else
+        params[:remoteStorage] = {:remoteStorageUrl => url.nil? ? "http://change-me.com/" : url}
+      end
       JSON.dump(:data => params)
     end
 
     def create_group_repository_json(name, id, provider)
       params = {:id => id.nil? ? sanitize_for_id(name) : sanitize_for_id(id)}
-      params[:name] = name
+      params[:name] = name.nil? ? id : name
       params[:provider] = provider.nil? ? "maven2" : provider
       params[:exposed] = true
       JSON.dump(:data => params)
