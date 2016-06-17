@@ -51,6 +51,8 @@ nexus-cli enable_smart_proxy                                                   #
 nexus-cli get_artifact_custom_info coordinates                                 # Gets and returns the custom metadata in XML format about a particular artifact.
 nexus-cli get_artifact_info coordinates                                        # Gets and returns the metadata in XML format about a particular artifact.
 nexus-cli get_global_settings                                                  # Prints out your Nexus' current setttings and saves them to a file.
+nexus-cli get_oss_ldap_conn_settings                                           # Prints out your Nexus' OSS LDAP connection setttings and saves them to a file.
+nexus-cli get_oss_ldap_user_group_settings                                     # Prints out your Nexus' OSS LDAP user and group setttings and saves them to a file.
 nexus-cli get_group_repository group_id                                        # Gets information about the given group repository.
 nexus-cli get_license_info                                                     # Returns the license information of the server.
 nexus-cli get_logging_info                                                     # Gets the log4j Settings of the Nexus server.
@@ -74,6 +76,8 @@ nexus-cli transfer_artifact coordinates from_repository to_repository          #
 nexus-cli update_artifact_custom_info coordinates param1 param2 ...            # Updates the artifact custom metadata with the given key-value pairs.
 nexus-cli update_user user_id                                                  # Updates a user's details. Leave fields blank for them to remain their current values.
 nexus-cli upload_global_settings                                               # Uploads a global_settings.json file to your Nexus to update its settings.
+nexus-cli upload_oss_ldap_conn_settings                                        # Uploads a oss_ldap_conn_settings.json file to your Nexus to update its OSS LDAP connection settings.
+nexus-cli upload_oss_ldap_user_group_settings                                  # Uploads a oss_ldap_user_group_settings.json file to your Nexus to update its OSS LDAP user and group settings.
 ```
 
 Each command can be prefaced with `help` to get more information about the command. For example - `nexus-cli help get_users`

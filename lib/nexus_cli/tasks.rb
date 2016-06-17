@@ -127,6 +127,38 @@ module NexusCli
           say "Your Nexus global settings have been reset to their default values", :blue
         end
 
+        desc "get_oss_ldap_conn_settings", "Prints out your Nexus' OSS LDAP connection setttings and saves them to a file."
+        def get_oss_ldap_conn_settings
+          nexus_remote.get_oss_ldap_conn_settings
+          say "Your current Nexus OSS LDAP connection settings have been written to the file: ~/.nexus/oss_ldap_conn_settings.json", :blue
+        end
+
+        method_option :json,
+          :type => :string,
+          :default => nil,
+          :desc => "A String of the JSON you wish to upload."
+        desc "upload_oss_ldap_conn_settings", "Uploads a oss_ldap_conn_settings.json file to your Nexus to update its OSS LDAP connection settings."
+        def upload_oss_ldap_conn_settings
+          nexus_remote.upload_oss_ldap_conn_settings
+          say "Your oss_ldap_conn_settings.json file has been uploaded to Nexus", :blue
+        end
+
+        desc "get_oss_ldap_user_group_settings", "Prints out your Nexus' OSS LDAP user and group setttings and saves them to a file."
+        def get_oss_ldap_user_group_settings
+          nexus_remote.get_oss_ldap_user_group_settings
+          say "Your current Nexus OSS LDAP user and group settings have been written to the file: ~/.nexus/oss_ldap_user_group_settings.json", :blue
+        end
+
+        method_option :json,
+          :type => :string,
+          :default => nil,
+          :desc => "A String of the JSON you wish to upload."
+        desc "upload_oss_ldap_user_group_settings", "Uploads a oss_ldap_user_group_settings.json file to your Nexus to update its OSS LDAP user and group settings."
+        def upload_oss_ldap_user_group_settings
+          nexus_remote.upload_oss_ldap_user_group_settings
+          say "Your oss_ldap_user_group_settings.json file has been uploaded to Nexus", :blue
+        end
+
         method_option :id,
           :type => :string,
           :desc => "The id of the repository to use."
