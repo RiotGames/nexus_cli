@@ -55,7 +55,7 @@ module NexusCli
     def push_artifact(coordinates, file)
       artifact = Artifact.new(coordinates)
       put_string = "content/repositories/#{configuration['repository']}/#{artifact.group_id.gsub(".", "/")}/#{artifact.artifact_id.gsub(".", "/")}/#{artifact.version}/#{artifact.file_name}"
-      response = nexus.put(nexus_url(put_string), File.open(file))
+      response = nexus.put(nexus_url(put_string), File.open(file), { 'Content-Type' => '' })
 
       case response.status
       when 201
