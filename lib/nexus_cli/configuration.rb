@@ -1,5 +1,4 @@
-require 'extlib'
-require 'chozo'
+require 'yaml'
 
 module NexusCli
   class Configuration
@@ -68,28 +67,35 @@ module NexusCli
       self.class.validate!(self)
     end
 
-    include Chozo::VariaModel
+    def valid?
+      errors.empty?
+    end
 
-    attribute :url,
-      type: String,
-      required: true
+    def errors
+      result = Hash.new
+      result[:url] = ["url required"] unless url.is_a?(String) && url.size > 0
+      result[:repository] = ["repository required"] unless repository.is_a?(String) && repository.size > 0
+      result
+    end
 
-    attribute :repository,
-      type: String,
-      required: true,
-      coerce: lambda { |m|
-        m = m.is_a?(String) ? m.gsub(' ', '_') : m
-      }
-
-    attribute :username,
-      type: String
-
-    attribute :password,
-      type: String
+    attr_accessor :url
+    attr_accessor :repository
+    attr_accessor :username
+    attr_accessor :password
 
     def initialize(options)
-      mass_assign(options)
-      self.repository = options[:repository]
+      @url = options[:url]
+      @repository = options[:repository]
+      @username = options[:username]
+      @password = options[:password]
+
+      if @repository.is_a?(String)
+        @repository = @repository.gsub(' ', '_')
+      end
+    end
+
+    def [](attr)
+      self.instance_variable_get('@' + attr.to_s)
     end
   end
 end
